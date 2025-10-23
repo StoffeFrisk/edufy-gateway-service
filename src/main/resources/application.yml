@@ -1,0 +1,71 @@
+server:
+  port: 4505
+
+spring:
+  application:
+    name: gateway
+  cloud:
+    gateway:
+      routes:
+        - id: music
+          uri: http://music:4525
+          predicates:
+            - Path=/api/music/**
+          filters:
+            - StripPrefix=2
+
+        - id: pod
+          uri: http://pod:4535
+          predicates:
+            - Path=/api/pod/**
+          filters:
+            - StripPrefix=2
+
+        - id: video
+          uri: http://video:4545
+          predicates:
+            - Path=/api/video/**
+          filters:
+            - StripPrefix=2
+
+        - id: likedislike
+          uri: http://likes:4585
+          predicates:
+            - Path=/api/likes/**
+          filters:
+            - StripPrefix=2
+
+        - id: user
+          uri: http://user:4515
+          predicates:
+            - Path=/api/user/**
+          filters:
+            - StripPrefix=2
+
+        - id: album
+          uri: http://album:4565
+          predicates:
+            - Path=/api/album/**
+          filters:
+            - StripPrefix=2
+
+        - id: artist
+          uri: http://artist:4555
+          predicates:
+            - Path=/api/artist/**
+          filters:
+            - StripPrefix=2
+
+        - id: recommendations
+          uri: http://recommendations:4575
+          predicates:
+            - Path=/api/recommendations/**
+          filters:
+            - StripPrefix=2
+
+        - id: history
+          uri: http://history:4595
+          predicates:
+            - Path=/api/history/**
+          filters:
+            - StripPrefix=2

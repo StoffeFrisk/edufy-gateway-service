@@ -1,0 +1,372 @@
+version: "3.9"
+
+networks:
+  cadett-splitters-net:
+    name: cadett-splitters-net
+
+volumes:
+  db-music:
+  db-pod:
+  db-video:
+  db-likes:
+  db-user:
+  db-album:
+  db-artist:
+  db-recommendations:
+  db-history:
+
+services:
+  # =============== GATEWAY ===============
+  gateway:
+    build:
+      context: ../CadettSplittersGateway
+      dockerfile: Dockerfile
+    container_name: gateway
+    depends_on:
+      - music
+      - pod
+      - video
+      - likes
+      - user
+      - album
+      - artist
+      - recommendations
+      - history
+    ports:
+      - "4505:4505"
+    networks:
+      - cadett-splitters-net
+    restart: unless-stopped
+
+  # =============== MUSIC ===========================
+  db-music:
+    image: mysql:8
+    container_name: db-music
+    environment:
+      MYSQL_DATABASE: music
+      MYSQL_USER: cadett-splitters
+      MYSQL_PASSWORD: cspwd
+      MYSQL_ROOT_PASSWORD: rootpwd
+    volumes:
+      - db-music:/var/lib/mysql
+    networks:
+      - cadett-splitters-net
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "127.0.0.1", "-uroot", "-prootpwd", "--silent"]
+      interval: 5s
+      timeout: 3s
+      retries: 30
+
+  music:
+    build:
+      context: ../Music
+      dockerfile: Dockerfile
+    container_name: music
+    depends_on:
+      db-music:
+        condition: service_healthy
+    environment:
+      SPRING_DATASOURCE_URL: jdbc:mysql://db-music:3306/music?useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC
+      SPRING_DATASOURCE_USERNAME: cadett-splitters
+      SPRING_DATASOURCE_PASSWORD: cspwd
+      SERVER_PORT: 4525
+    networks:
+      - cadett-splitters-net
+    restart: unless-stopped
+
+  # =============== POD =============================
+  db-pod:
+    image: mysql:8
+    container_name: db-pod
+    environment:
+      MYSQL_DATABASE: pod
+      MYSQL_USER: cadett-splitters
+      MYSQL_PASSWORD: cspwd
+      MYSQL_ROOT_PASSWORD: rootpwd
+    volumes:
+      - db-pod:/var/lib/mysql
+    networks:
+      - cadett-splitters-net
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "127.0.0.1", "-uroot", "-prootpwd", "--silent"]
+      interval: 5s
+      timeout: 3s
+      retries: 30
+
+  pod:
+    build:
+      context: ../Pod
+      dockerfile: Dockerfile
+    container_name: pod
+    depends_on:
+      db-pod:
+        condition: service_healthy
+    environment:
+      SPRING_DATASOURCE_URL: jdbc:mysql://db-pod:3306/pod?useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC
+      SPRING_DATASOURCE_USERNAME: cadett-splitters
+      SPRING_DATASOURCE_PASSWORD: cspwd
+      SERVER_PORT: 4535
+    networks:
+      - cadett-splitters-net
+    restart: unless-stopped
+
+  # =============== VIDEO ===========================
+  db-video:
+    image: mysql:8
+    container_name: db-video
+    environment:
+      MYSQL_DATABASE: video
+      MYSQL_USER: cadett-splitters
+      MYSQL_PASSWORD: cspwd
+      MYSQL_ROOT_PASSWORD: rootpwd
+    volumes:
+      - db-video:/var/lib/mysql
+    networks:
+      - cadett-splitters-net
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "127.0.0.1", "-uroot", "-prootpwd", "--silent"]
+      interval: 5s
+      timeout: 3s
+      retries: 30
+
+  video:
+    build:
+      context: ../Video
+      dockerfile: Dockerfile
+    container_name: video
+    depends_on:
+      db-video:
+        condition: service_healthy
+    environment:
+      SPRING_DATASOURCE_URL: jdbc:mysql://db-video:3306/video?useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC
+      SPRING_DATASOURCE_USERNAME: cadett-splitters
+      SPRING_DATASOURCE_PASSWORD: cspwd
+      SERVER_PORT: 4545
+    networks:
+      - cadett-splitters-net
+    restart: unless-stopped
+
+  # =============== LIKES ===========================
+  db-likes:
+    image: mysql:8
+    container_name: db-likes
+    environment:
+      MYSQL_DATABASE: likes
+      MYSQL_USER: cadett-splitters
+      MYSQL_PASSWORD: cspwd
+      MYSQL_ROOT_PASSWORD: rootpwd
+    volumes:
+      - db-likes:/var/lib/mysql
+    networks:
+      - cadett-splitters-net
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "127.0.0.1", "-uroot", "-prootpwd", "--silent"]
+      interval: 5s
+      timeout: 3s
+      retries: 30
+
+  likes:
+    build:
+      context: ../Likes
+      dockerfile: Dockerfile
+    container_name: likes
+    depends_on:
+      db-likes:
+        condition: service_healthy
+    environment:
+      SPRING_DATASOURCE_URL: jdbc:mysql://db-likes:3306/likes?useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC
+      SPRING_DATASOURCE_USERNAME: cadett-splitters
+      SPRING_DATASOURCE_PASSWORD: cspwd
+      SERVER_PORT: 4585
+    networks:
+      - cadett-splitters-net
+    restart: unless-stopped
+
+  # =============== USER ============================
+  db-user:
+    image: mysql:8
+    container_name: db-user
+    environment:
+      MYSQL_DATABASE: user
+      MYSQL_USER: cadett-splitters
+      MYSQL_PASSWORD: cspwd
+      MYSQL_ROOT_PASSWORD: rootpwd
+    volumes:
+      - db-user:/var/lib/mysql
+    networks:
+      - cadett-splitters-net
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "127.0.0.1", "-uroot", "-prootpwd", "--silent"]
+      interval: 5s
+      timeout: 3s
+      retries: 30
+
+  user:
+    build:
+      context: ../User
+      dockerfile: Dockerfile
+    container_name: user
+    depends_on:
+      db-user:
+        condition: service_healthy
+    environment:
+      SPRING_DATASOURCE_URL: jdbc:mysql://db-user:3306/user?useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC
+      SPRING_DATASOURCE_USERNAME: cadett-splitters
+      SPRING_DATASOURCE_PASSWORD: cspwd
+      SERVER_PORT: 4515
+    networks:
+      - cadett-splitters-net
+    restart: unless-stopped
+
+  # =============== ALBUM ===========================
+  db-album:
+    image: mysql:8
+    container_name: db-album
+    environment:
+      MYSQL_DATABASE: album
+      MYSQL_USER: cadett-splitters
+      MYSQL_PASSWORD: cspwd
+      MYSQL_ROOT_PASSWORD: rootpwd
+    volumes:
+      - db-album:/var/lib/mysql
+    networks:
+      - cadett-splitters-net
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "127.0.0.1", "-uroot", "-prootpwd", "--silent"]
+      interval: 5s
+      timeout: 3s
+      retries: 30
+
+  album:
+    build:
+      context: ../Album
+      dockerfile: Dockerfile
+    container_name: album
+    depends_on:
+      db-album:
+        condition: service_healthy
+    environment:
+      SPRING_DATASOURCE_URL: jdbc:mysql://db-album:3306/album?useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC
+      SPRING_DATASOURCE_USERNAME: cadett-splitters
+      SPRING_DATASOURCE_PASSWORD: cspwd
+      SERVER_PORT: 4565
+    networks:
+      - cadett-splitters-net
+    restart: unless-stopped
+
+  # =============== ARTIST ==========================
+  db-artist:
+    image: mysql:8
+    container_name: db-artist
+    environment:
+      MYSQL_DATABASE: artist
+      MYSQL_USER: cadett-splitters
+      MYSQL_PASSWORD: cspwd
+      MYSQL_ROOT_PASSWORD: rootpwd
+    volumes:
+      - db-artist:/var/lib/mysql
+    networks:
+      - cadett-splitters-net
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "127.0.0.1", "-uroot", "-prootpwd", "--silent"]
+      interval: 5s
+      timeout: 3s
+      retries: 30
+
+  artist:
+    build:
+      context: ../Artist
+      dockerfile: Dockerfile
+    container_name: artist
+    depends_on:
+      db-artist:
+        condition: service_healthy
+    environment:
+      SPRING_DATASOURCE_URL: jdbc:mysql://db-artist:3306/artist?useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC
+      SPRING_DATASOURCE_USERNAME: cadett-splitters
+      SPRING_DATASOURCE_PASSWORD: cspwd
+      SERVER_PORT: 4555
+    networks:
+      - cadett-splitters-net
+    restart: unless-stopped
+
+  # =============== RECOMMENDATIONS ==================
+  db-recommendations:
+    image: mysql:8
+    container_name: db-recommendations
+    environment:
+      MYSQL_DATABASE: recommendations
+      MYSQL_USER: cadett-splitters
+      MYSQL_PASSWORD: cspwd
+      MYSQL_ROOT_PASSWORD: rootpwd
+    volumes:
+      - db-recommendations:/var/lib/mysql
+    networks:
+      - cadett-splitters-net
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "127.0.0.1", "-uroot", "-prootpwd", "--silent"]
+      interval: 5s
+      timeout: 3s
+      retries: 30
+
+  recommendations:
+    build:
+      context: ../Recommendations
+      dockerfile: Dockerfile
+    container_name: recommendations
+    depends_on:
+      db-recommendations:
+        condition: service_healthy
+    environment:
+      SPRING_DATASOURCE_URL: jdbc:mysql://db-recommendations:3306/recommendations?useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC
+      SPRING_DATASOURCE_USERNAME: cadett-splitters
+      SPRING_DATASOURCE_PASSWORD: cspwd
+      SERVER_PORT: 4575
+    networks:
+      - cadett-splitters-net
+    restart: unless-stopped
+
+  # =============== HISTORY =========================
+  db-history:
+    image: mysql:8
+    container_name: db-history
+    environment:
+      MYSQL_DATABASE: history
+      MYSQL_USER: cadett-splitters
+      MYSQL_PASSWORD: cspwd
+      MYSQL_ROOT_PASSWORD: rootpwd
+    volumes:
+      - db-history:/var/lib/mysql
+    networks:
+      - cadett-splitters-net
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "127.0.0.1", "-uroot", "-prootpwd", "--silent"]
+      interval: 5s
+      timeout: 3s
+      retries: 30
+
+  history:
+    build:
+      context: ../History
+      dockerfile: Dockerfile
+    container_name: history
+    depends_on:
+      db-history:
+        condition: service_healthy
+    environment:
+      SPRING_DATASOURCE_URL: jdbc:mysql://db-history:3306/history?useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC
+      SPRING_DATASOURCE_USERNAME: cadett-splitters
+      SPRING_DATASOURCE_PASSWORD: cspwd
+      SERVER_PORT: 4595
+    networks:
+      - cadett-splitters-net
+    restart: unless-stopped
