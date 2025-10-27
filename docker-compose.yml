@@ -19,9 +19,9 @@ services:
   # =============== GATEWAY ===============
   gateway:
     build:
-      context: ../CadettSplittersGateway
+      context: ../edufy-gateway-service
       dockerfile: Dockerfile
-    container_name: gateway
+    container_name: edufy-gateway
     depends_on:
       - music
       - pod
@@ -356,9 +356,9 @@ services:
 
   history:
     build:
-      context: ../History
+      context: ../edufy-history-service
       dockerfile: Dockerfile
-    container_name: history
+    container_name: edufy-history
     depends_on:
       db-history:
         condition: service_healthy

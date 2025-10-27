@@ -3,7 +3,7 @@ server:
 
 spring:
   application:
-    name: gateway
+    name: edufy-gateway
   cloud:
     gateway:
       routes:
@@ -68,4 +68,3 @@ spring:
           predicates:
             - Path=/api/history/**
           filters:
-            - StripPrefix=2
