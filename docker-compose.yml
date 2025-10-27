@@ -21,17 +21,17 @@ services:
     build:
       context: ../CadettSplittersGateway
       dockerfile: Dockerfile
-    container_name: gateway
+    container_name: edufy-gateway-service
     depends_on:
-      - music
-      - pod
-      - video
-      - likes
-      - user
-      - album
-      - artist
-      - recommendations
-      - history
+      - edufy-music-service
+      - edufy-pod-service
+      - edufy-video-service
+      - edufy-likes-service
+      - edufy-user-service
+      - edufy-album-service
+      - edufy-artist-service
+      - edufy-recommendations-service
+      - edufy-history-service
     ports:
       - "4505:4505"
     networks:
@@ -58,11 +58,11 @@ services:
       timeout: 3s
       retries: 30
 
-  music:
+  edufy-music-service:
     build:
-      context: ../Music
+      context: ../edufy-music-service
       dockerfile: Dockerfile
-    container_name: music
+    container_name: edufy-music-service
     depends_on:
       db-music:
         condition: service_healthy
@@ -95,11 +95,11 @@ services:
       timeout: 3s
       retries: 30
 
-  pod:
+  edufy-pod-service:
     build:
-      context: ../Pod
+      context: ../edufy-pod-service
       dockerfile: Dockerfile
-    container_name: pod
+    container_name: edufy-pod-service
     depends_on:
       db-pod:
         condition: service_healthy
@@ -132,9 +132,9 @@ services:
       timeout: 3s
       retries: 30
 
-  video:
+  edufy-video-service:
     build:
-      context: ../Video
+      context: ../edufy-video-service
       dockerfile: Dockerfile
     container_name: video
     depends_on:
@@ -149,17 +149,17 @@ services:
       - cadett-splitters-net
     restart: unless-stopped
 
-  # =============== LIKES ===========================
-  db-likes:
+  # =============== RATINGS ===========================
+  db-ratings:
     image: mysql:8
-    container_name: db-likes
+    container_name: db-ratings
     environment:
-      MYSQL_DATABASE: likes
+      MYSQL_DATABASE: ratings
       MYSQL_USER: cadett-splitters
       MYSQL_PASSWORD: cspwd
       MYSQL_ROOT_PASSWORD: rootpwd
     volumes:
-      - db-likes:/var/lib/mysql
+      - db-ratings:/var/lib/mysql
     networks:
       - cadett-splitters-net
     restart: unless-stopped
@@ -169,16 +169,16 @@ services:
       timeout: 3s
       retries: 30
 
-  likes:
+  edufy-ratings-service:
     build:
-      context: ../Likes
+      context: ../edufy-ratings-service
       dockerfile: Dockerfile
-    container_name: likes
+    container_name: edufy-ratings-service
     depends_on:
       db-likes:
         condition: service_healthy
     environment:
-      SPRING_DATASOURCE_URL: jdbc:mysql://db-likes:3306/likes?useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC
+      SPRING_DATASOURCE_URL: jdbc:mysql://db-ratings:3306/ratings?useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC
       SPRING_DATASOURCE_USERNAME: cadett-splitters
       SPRING_DATASOURCE_PASSWORD: cspwd
       SERVER_PORT: 4585
@@ -206,11 +206,11 @@ services:
       timeout: 3s
       retries: 30
 
-  user:
+  edufy-user-service:
     build:
-      context: ../User
+      context: ../edufy-user-service
       dockerfile: Dockerfile
-    container_name: user
+    container_name: edufy-user-service
     depends_on:
       db-user:
         condition: service_healthy
@@ -243,11 +243,11 @@ services:
       timeout: 3s
       retries: 30
 
-  album:
+  edufy-album-service:
     build:
-      context: ../Album
+      context: ../edufy-album-service
       dockerfile: Dockerfile
-    container_name: album
+    container_name: edufy-album-service
     depends_on:
       db-album:
         condition: service_healthy
@@ -280,11 +280,11 @@ services:
       timeout: 3s
       retries: 30
 
-  artist:
+  edufy-artist-service:
     build:
-      context: ../Artist
+      context: ../edufy-artist-service
       dockerfile: Dockerfile
-    container_name: artist
+    container_name: edufy-artist-service
     depends_on:
       db-artist:
         condition: service_healthy
@@ -317,11 +317,11 @@ services:
       timeout: 3s
       retries: 30
 
-  recommendations:
+  edufy-recommendations-service:
     build:
-      context: ../Recommendations
+      context: ../edufy-recommendations-service
       dockerfile: Dockerfile
-    container_name: recommendations
+    container_name: edufy-recommendations-service
     depends_on:
       db-recommendations:
         condition: service_healthy
@@ -354,11 +354,11 @@ services:
       timeout: 3s
       retries: 30
 
-  history:
+  edufy-history-service:
     build:
-      context: ../History
+      context: ../edufy-history-service
       dockerfile: Dockerfile
-    container_name: history
+    container_name: edufy-history-service
     depends_on:
       db-history:
         condition: service_healthy
