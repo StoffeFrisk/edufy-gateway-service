@@ -16,7 +16,7 @@ volumes:
 
 services:
   # =============== GATEWAY ===============
-  gateway:
+  edufy-gateway-service:
     build:
       context: ../edufy-gateway-service
       dockerfile: Dockerfile
@@ -57,11 +57,11 @@ services:
       timeout: 3s
       retries: 30
 
-  music:
+  edufy-music-service:
     build:
-      context: ../Music
+      context: ../edufy-music-service
       dockerfile: Dockerfile
-    container_name: music
+    container_name: edufy-music-service
     depends_on:
       db-music:
         condition: service_healthy
@@ -94,11 +94,11 @@ services:
       timeout: 3s
       retries: 30
 
-  pod:
+  edufy-pod-service:
     build:
-      context: ../Pod
+      context: ../edufy-pod-service
       dockerfile: Dockerfile
-    container_name: pod
+    container_name: edufy-pod-service
     depends_on:
       db-pod:
         condition: service_healthy
@@ -131,11 +131,11 @@ services:
       timeout: 3s
       retries: 30
 
-  video:
+  edufy-video-service:
     build:
-      context: ../Video
+      context: ../edufy-video-service
       dockerfile: Dockerfile
-    container_name: video
+    container_name: edufy-video-service
     depends_on:
       db-video:
         condition: service_healthy
@@ -148,12 +148,12 @@ services:
       - cadett-splitters-net
     restart: unless-stopped
 
-  # =============== LIKES ===========================
-  db-likes:
+  # =============== RATINGS ===========================
+  db-ratings:
     image: mysql:8
-    container_name: db-likes
+    container_name: db-ratings
     environment:
-      MYSQL_DATABASE: likes
+      MYSQL_DATABASE: ratings
       MYSQL_USER: cadett-splitters
       MYSQL_PASSWORD: cspwd
       MYSQL_ROOT_PASSWORD: rootpwd
@@ -168,11 +168,11 @@ services:
       timeout: 3s
       retries: 30
 
-  likes:
+  edufy-ratings-service:
     build:
-      context: ../Likes
+      context: ../edufy-ratings-service
       dockerfile: Dockerfile
-    container_name: likes
+    container_name: edufy-ratings-service
     depends_on:
       db-ratings:
         condition: service_healthy
@@ -190,7 +190,7 @@ services:
     image: mysql:8
     container_name: db-user
     environment:
-      MYSQL_DATABASE: user
+      MYSQL_DATABASE: users
       MYSQL_USER: cadett-splitters
       MYSQL_PASSWORD: cspwd
       MYSQL_ROOT_PASSWORD: rootpwd
@@ -205,11 +205,11 @@ services:
       timeout: 3s
       retries: 30
 
-  user:
+  edufy-user-service:
     build:
-      context: ../User
+      context: ../edufy-user-service
       dockerfile: Dockerfile
-    container_name: user
+    container_name: edufy-user-service
     depends_on:
       db-user:
         condition: service_healthy
@@ -242,11 +242,11 @@ services:
       timeout: 3s
       retries: 30
 
-  album:
+  edufy-album-service:
     build:
-      context: ../Album
+      context: ../edufy-album-service
       dockerfile: Dockerfile
-    container_name: album
+    container_name: edufy-album-service
     depends_on:
       db-album:
         condition: service_healthy
@@ -279,11 +279,11 @@ services:
       timeout: 3s
       retries: 30
 
-  artist:
+  edufy-artist-service:
     build:
-      context: ../Artist
+      context: ../edufy-artist-service
       dockerfile: Dockerfile
-    container_name: artist
+    container_name: edufy-artist-service
     depends_on:
       db-artist:
         condition: service_healthy
@@ -298,21 +298,21 @@ services:
 
   # =============== RECOMMENDATIONS ==================
 
-  recommendations:
+  edufy-recommendations-service:
     build:
-      context: ../Recommendations
+      context: ../edufy-recommendations-service
       dockerfile: Dockerfile
-    container_name: recommendations
+    container_name: edufy-recommendations-service
     depends_on:
-      - likes
-      - history
+      - edufy-ratings-service
+      - edufy-history-service
     environment:
       # Spring-port
       SERVER_PORT: 4575
 
       # Base-URL:er till andra tjänster (stateless integration)
-      APP_SERVICES_HISTORYBASEURL: http://history:4595
-      APP_SERVICES_LIKESBASEURL: http://likes:4585
+      APP_SERVICES_HISTORYBASEURL: http://edufy-history-service:4595
+      APP_SERVICES_RATINGSBASEURL: http://edufy-ratings-service:4585
     networks:
       - cadett-splitters-net
     restart: unless-stopped
@@ -337,9 +337,9 @@ services:
       timeout: 3s
       retries: 30
 
-  history:
+  edufy-history-service:
     build:
-      context: ../History
+      context: ../edufy-history-service
       dockerfile: Dockerfile
     container_name: edufy-history-service
     depends_on:
