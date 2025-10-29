@@ -6,20 +6,22 @@ spring:
     name: edufy-gateway-service
   cloud:
     gateway:
-      routes:
-        - id: music
-          uri: http://music:4525
-          predicates:
-            - Path=/api/music/**
-          filters:
-            - StripPrefix=2
+      server:
+        webmvc:
+          routes:
+            - id: edufy-music-service
+              uri: http://edufy-music-service:4525
+              predicates:
+                - Path=/api/music/**
+              filters:
+                - StripPrefix=1
 
-        - id: pod
-          uri: http://pod:4535
-          predicates:
-            - Path=/api/pod/**
-          filters:
-            - StripPrefix=2
+            - id: edufy-pod-service
+              uri: http://edufy-pod-service:4535
+              predicates:
+                - Path=/api/pod/**
+              filters:
+                - StripPrefix=1
 
         - id: video
           uri: http://video:4545
