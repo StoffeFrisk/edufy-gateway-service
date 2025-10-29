@@ -12,7 +12,6 @@ volumes:
   db-user:
   db-album:
   db-artist:
-  db-recommendations:
   db-history:
 
 services:
@@ -58,11 +57,11 @@ services:
       timeout: 3s
       retries: 30
 
-  edufy-music-service:
+  music:
     build:
-      context: ../edufy-music-service
+      context: ../Music
       dockerfile: Dockerfile
-    container_name: edufy-music-service
+    container_name: music
     depends_on:
       db-music:
         condition: service_healthy
@@ -95,11 +94,11 @@ services:
       timeout: 3s
       retries: 30
 
-  edufy-pod-service:
+  pod:
     build:
-      context: ../edufy-pod-service
+      context: ../Pod
       dockerfile: Dockerfile
-    container_name: edufy-pod-service
+    container_name: pod
     depends_on:
       db-pod:
         condition: service_healthy
@@ -132,9 +131,9 @@ services:
       timeout: 3s
       retries: 30
 
-  edufy-video-service:
+  video:
     build:
-      context: ../edufy-video-service
+      context: ../Video
       dockerfile: Dockerfile
     container_name: video
     depends_on:
@@ -149,17 +148,17 @@ services:
       - cadett-splitters-net
     restart: unless-stopped
 
-  # =============== RATINGS ===========================
-  db-ratings:
+  # =============== LIKES ===========================
+  db-likes:
     image: mysql:8
-    container_name: db-ratings
+    container_name: db-likes
     environment:
-      MYSQL_DATABASE: ratings
+      MYSQL_DATABASE: likes
       MYSQL_USER: cadett-splitters
       MYSQL_PASSWORD: cspwd
       MYSQL_ROOT_PASSWORD: rootpwd
     volumes:
-      - db-ratings:/var/lib/mysql
+      - db-likes:/var/lib/mysql
     networks:
       - cadett-splitters-net
     restart: unless-stopped
@@ -169,16 +168,16 @@ services:
       timeout: 3s
       retries: 30
 
-  edufy-ratings-service:
+  likes:
     build:
-      context: ../edufy-ratings-service
+      context: ../Likes
       dockerfile: Dockerfile
-    container_name: edufy-ratings-service
+    container_name: likes
     depends_on:
       db-ratings:
         condition: service_healthy
     environment:
-      SPRING_DATASOURCE_URL: jdbc:mysql://db-ratings:3306/ratings?useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC
+      SPRING_DATASOURCE_URL: jdbc:mysql://db-likes:3306/likes?useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC
       SPRING_DATASOURCE_USERNAME: cadett-splitters
       SPRING_DATASOURCE_PASSWORD: cspwd
       SERVER_PORT: 4585
@@ -206,11 +205,11 @@ services:
       timeout: 3s
       retries: 30
 
-  edufy-user-service:
+  user:
     build:
-      context: ../edufy-user-service
+      context: ../User
       dockerfile: Dockerfile
-    container_name: edufy-user-service
+    container_name: user
     depends_on:
       db-user:
         condition: service_healthy
@@ -243,11 +242,11 @@ services:
       timeout: 3s
       retries: 30
 
-  edufy-album-service:
+  album:
     build:
-      context: ../edufy-album-service
+      context: ../Album
       dockerfile: Dockerfile
-    container_name: edufy-album-service
+    container_name: album
     depends_on:
       db-album:
         condition: service_healthy
@@ -280,11 +279,11 @@ services:
       timeout: 3s
       retries: 30
 
-  edufy-artist-service:
+  artist:
     build:
-      context: ../edufy-artist-service
+      context: ../Artist
       dockerfile: Dockerfile
-    container_name: edufy-artist-service
+    container_name: artist
     depends_on:
       db-artist:
         condition: service_healthy
@@ -298,38 +297,22 @@ services:
     restart: unless-stopped
 
   # =============== RECOMMENDATIONS ==================
-  db-recommendations:
-    image: mysql:8
-    container_name: db-recommendations
-    environment:
-      MYSQL_DATABASE: recommendations
-      MYSQL_USER: cadett-splitters
-      MYSQL_PASSWORD: cspwd
-      MYSQL_ROOT_PASSWORD: rootpwd
-    volumes:
-      - db-recommendations:/var/lib/mysql
-    networks:
-      - cadett-splitters-net
-    restart: unless-stopped
-    healthcheck:
-      test: ["CMD", "mysqladmin", "ping", "-h", "127.0.0.1", "-uroot", "-prootpwd", "--silent"]
-      interval: 5s
-      timeout: 3s
-      retries: 30
 
-  edufy-recommendations-service:
+  recommendations:
     build:
-      context: ../edufy-recommendations-service
+      context: ../Recommendations
       dockerfile: Dockerfile
-    container_name: edufy-recommendations-service
+    container_name: recommendations
     depends_on:
-      db-recommendations:
-        condition: service_healthy
+      - likes
+      - history
     environment:
-      SPRING_DATASOURCE_URL: jdbc:mysql://db-recommendations:3306/recommendations?useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC
-      SPRING_DATASOURCE_USERNAME: cadett-splitters
-      SPRING_DATASOURCE_PASSWORD: cspwd
+      # Spring-port
       SERVER_PORT: 4575
+
+      # Base-URL:er till andra tjänster (stateless integration)
+      APP_SERVICES_HISTORYBASEURL: http://history:4595
+      APP_SERVICES_LIKESBASEURL: http://likes:4585
     networks:
       - cadett-splitters-net
     restart: unless-stopped
@@ -354,9 +337,9 @@ services:
       timeout: 3s
       retries: 30
 
-  edufy-history-service:
+  history:
     build:
-      context: ../edufy-history-service
+      context: ../History
       dockerfile: Dockerfile
     container_name: edufy-history-service
     depends_on:
