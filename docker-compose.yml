@@ -8,7 +8,7 @@ volumes:
   db-music:
   db-pod:
   db-video:
-  db-likes:
+  db-ratings:
   db-user:
   db-album:
   db-artist:
@@ -19,14 +19,14 @@ services:
   # =============== GATEWAY ===============
   gateway:
     build:
-      context: ../CadettSplittersGateway
+      context: ../edufy-gateway-service
       dockerfile: Dockerfile
     container_name: edufy-gateway-service
     depends_on:
       - edufy-music-service
       - edufy-pod-service
       - edufy-video-service
-      - edufy-likes-service
+      - edufy-ratings-service
       - edufy-user-service
       - edufy-album-service
       - edufy-artist-service
@@ -175,7 +175,7 @@ services:
       dockerfile: Dockerfile
     container_name: edufy-ratings-service
     depends_on:
-      db-likes:
+      db-ratings:
         condition: service_healthy
     environment:
       SPRING_DATASOURCE_URL: jdbc:mysql://db-ratings:3306/ratings?useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC
