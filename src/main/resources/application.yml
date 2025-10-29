@@ -14,14 +14,14 @@ spring:
               predicates:
                 - Path=/api/music/**
               filters:
-                - StripPrefix=2
+                - StripPrefix=1
 
             - id: edufy-pod-service
               uri: http://edufy-pod-service:4535
               predicates:
                 - Path=/api/pod/**
               filters:
-                - StripPrefix=2
+                - StripPrefix=1
 
             - id: edufy-video-service
               uri: http://edufy-video-service:4545
