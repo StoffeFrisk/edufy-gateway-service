@@ -61,11 +61,9 @@ spring:
           predicates:
             - Path=/api/recommendations/**
           filters:
-            - StripPrefix=2
 
-            - id: edufy-history-service
+            - id: history
               uri: http://edufy-history-service:4595
               predicates:
                 - Path=/api/history/**
               filters:
-                - StripPrefix=2

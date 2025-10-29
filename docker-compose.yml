@@ -12,7 +12,6 @@ volumes:
   db-user:
   db-album:
   db-artist:
-  db-recommendations:
   db-history:
 
 services:
@@ -298,24 +297,6 @@ services:
     restart: unless-stopped
 
   # =============== RECOMMENDATIONS ==================
-  db-recommendations:
-    image: mysql:8
-    container_name: db-recommendations
-    environment:
-      MYSQL_DATABASE: recommendations
-      MYSQL_USER: cadett-splitters
-      MYSQL_PASSWORD: cspwd
-      MYSQL_ROOT_PASSWORD: rootpwd
-    volumes:
-      - db-recommendations:/var/lib/mysql
-    networks:
-      - cadett-splitters-net
-    restart: unless-stopped
-    healthcheck:
-      test: ["CMD", "mysqladmin", "ping", "-h", "127.0.0.1", "-uroot", "-prootpwd", "--silent"]
-      interval: 5s
-      timeout: 3s
-      retries: 30
 
   recommendations:
     build:
@@ -323,13 +304,15 @@ services:
       dockerfile: Dockerfile
     container_name: recommendations
     depends_on:
-      db-recommendations:
-        condition: service_healthy
+      - likes
+      - history
     environment:
-      SPRING_DATASOURCE_URL: jdbc:mysql://db-recommendations:3306/recommendations?useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC
-      SPRING_DATASOURCE_USERNAME: cadett-splitters
-      SPRING_DATASOURCE_PASSWORD: cspwd
+      # Spring-port
       SERVER_PORT: 4575
+
+      # Base-URL:er till andra tjänster (stateless integration)
+      APP_SERVICES_HISTORYBASEURL: http://history:4595
+      APP_SERVICES_LIKESBASEURL: http://likes:4585
     networks:
       - cadett-splitters-net
     restart: unless-stopped
