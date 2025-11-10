@@ -7,12 +7,7 @@ import java.util.List;
 
 public interface KeycloakService {
     String createUser(KeycloakDTO userDto);
-    String getClientAdminToken();
     String getKeycloakUserId(String username);
-    void deleteKeycloakUser(KeycloakDTO keycloakDTO);
+    void deleteKeycloakUser(String keycloakId);
     void assignRoleToUser(KeycloakDTO userDto);
-    void createRealm(String realmName);
-    String createClient(String clientId, List<String> redirectUris);
-    void createRoles( String clientUuid);
-    void keycloakSetup();
 }

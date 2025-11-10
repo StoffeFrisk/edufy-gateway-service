@@ -12,7 +12,6 @@ keycloak:
   auth-server-url: ${KEYCLOAK_AUTH_SERVER_URL:http://localhost:8080}
   realm: ${KEYCLOAK_REALM:edufy-realm}
   client-id: ${KEYCLOAK_CLIENT_ID:edufy-gateway-service}
-  client-secret: ${KEYCLOAK_CLIENT_SECRET:secret}
   kcBootstrapAdminUsername: ${KC_BOOTSTRAP_ADMIN_USERNAME:BSadmin}
   kcBootstrapAdminPassword: ${KC_BOOTSTRAP_ADMIN_PASSWORD:BSadmin}
 

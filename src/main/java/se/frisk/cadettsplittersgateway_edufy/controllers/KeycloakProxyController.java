@@ -19,16 +19,6 @@ public class KeycloakProxyController {
     }
 
 
-
-    //testing setup
-    @GetMapping("/setup")
-    public ResponseEntity<String> keycloakSetup(){
-        keycloakServiceImpl.keycloakSetup();
-        return ResponseEntity.ok("setup complete");
-    }
-
-
-
     @PostMapping("/newuser")
     public ResponseEntity<String> newUser(@RequestBody KeycloakDTO userDTO) {
         String createdUserId = keycloakServiceImpl.createUser(userDTO);
