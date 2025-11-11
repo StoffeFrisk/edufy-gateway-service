@@ -1,6 +1,7 @@
 package se.frisk.cadettsplittersgateway_edufy.clients;
 
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.core.ParameterizedTypeReference;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
@@ -11,15 +12,12 @@ import org.springframework.web.client.HttpClientErrorException;
 import org.springframework.web.client.RestClient;
 import org.springframework.web.client.RestClientException;
 import se.frisk.cadettsplittersgateway_edufy.dtos.KeycloakDTO;
+import se.frisk.cadettsplittersgateway_edufy.dtos.RoleDTO;
 import se.frisk.cadettsplittersgateway_edufy.dtos.UserRepresentation;
 import se.frisk.cadettsplittersgateway_edufy.enums.KeycloakRoles;
-
 import java.net.URI;
 import java.time.Instant;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 import java.util.stream.Collectors;
 
 @Component
@@ -37,6 +35,12 @@ public class KeycloakClient {
     private String clientUuid;
     private String clientSecret;
     private String clientToken;
+    private static final Set<String> ADMIN_ROLES = Set.of(
+            "manage-users",
+            "view-users",
+            "view-clients",
+            "manage-clients"
+    );
 
     public KeycloakClient(@Value("${keycloak.kcBootstrapAdminUsername}") String kcBootstrapAdminUsername,
                           @Value("${keycloak.kcBootstrapAdminPassword}") String kcBootstrapAdminPassword,
@@ -59,6 +63,12 @@ public class KeycloakClient {
     private void ensureAdminToken() {
         if (adminToken == null || Instant.now().isAfter(tokenExpiry)) {
             getAdminToken();
+        }
+    }
+
+    private void ensureClientToken(){
+        if(clientToken == null || Instant.now().isAfter(tokenExpiry)){
+            getClientCredentialsToken();
         }
     }
 
@@ -106,8 +116,15 @@ public class KeycloakClient {
         if (response == null || !response.containsKey("access_token")) {
             throw new RuntimeException("Failed to obtain client credentials token");
         }
+        clientToken = (String) response.get("access_token");
 
-        return (String) response.get("access_token");
+        int expiresIn = ((Number) response.get("expires_in")).intValue();
+
+        this.tokenExpiry = Instant.now().plusSeconds(expiresIn - 10);
+
+        System.out.println("Fetched new client token, expires in " + expiresIn + " seconds.");
+
+        return clientToken;
     }
 
     public void ensureRealmExists() {
@@ -204,15 +221,69 @@ public class KeycloakClient {
         throw new RuntimeException("Failed to fetch client secret for " + clientUuid);
     }
 
-    public void createRoles(String clientUuid) {
+    public void assignAdminRolesToClient(){
         ensureAdminToken();
+
+        Map<String, Object> serviceAccount = restClient.get()
+                .uri("/admin/realms/{realm}/clients/{clientUuid}/service-account-user", realmName, clientUuid)
+                .header(HttpHeaders.AUTHORIZATION, "Bearer " + adminToken)
+                .retrieve()
+                .body(Map.class);
+
+        String serviceUserId = (String) serviceAccount.get("id");
+
+        List<Map<String, Object>> realmManagement   = restClient.get()
+                .uri("/admin/realms/{realm}/clients?clientId=realm-managment",realmName)
+                .header(HttpHeaders.AUTHORIZATION, "Bearer " + adminToken)
+                .retrieve()
+                .body(List.class);
+
+        if(realmManagement == null || realmManagement.isEmpty()){
+            throw new RuntimeException("Could not find realm-management client");
+        }
+
+        String realmManagementId = (String) realmManagement.get(0).get("id");
+
+        List<RoleDTO> selectedRoles = getAdminRoles();
+
+        restClient.post()
+                .uri("/admin/realms/{realm}/users/{userId}/role-mappings/clients/{clientId}", Map.of(
+                        "realm", realmName,
+                        "userId", serviceUserId,
+                        "clientId", realmManagementId
+                ))
+                .header(HttpHeaders.AUTHORIZATION, "Bearer " + adminToken)
+                .body(selectedRoles)
+                .retrieve()
+                .toBodilessEntity();
+
+        System.out.println("✅ Assigned realm-management roles to service account for client " + clientId);
+
+    }
+
+    public List<RoleDTO> getAdminRoles() {
+        ensureAdminToken();
+
+        RoleDTO[] roleArray = restClient.get()
+                .uri("/admin/realms/{realm}/roles", Map.of("realm", realmName))
+                .header(HttpHeaders.AUTHORIZATION, "Bearer " + adminToken)
+                .retrieve()
+                .body(RoleDTO[].class);
+
+        return Arrays.stream(roleArray)
+                .filter(r -> ADMIN_ROLES.contains(r.getName()))
+                .toList();
+    }
+
+    public void createRoles(String clientUuid) {
+        ensureClientToken();
 
         List<Map<String, Object>> existingRoles = restClient.get()
                 .uri("/admin/realms/{realm}/clients/{clientUuid}/roles", Map.of(
                         "realm", realmName,
                         "clientUuid", clientUuid
                 ))
-                .header(HttpHeaders.AUTHORIZATION, "Bearer " + adminToken)
+                .header(HttpHeaders.AUTHORIZATION, "Bearer " + clientToken)
                 .retrieve()
                 .body(List.class);
 
@@ -230,7 +301,7 @@ public class KeycloakClient {
             try {
                 restClient.post()
                         .uri("/admin/realms/{realm}/clients/{clientUuid}/roles", Map.of("realm", realmName, "clientUuid", clientUuid))
-                        .header(HttpHeaders.AUTHORIZATION, "Bearer " + adminToken)
+                        .header(HttpHeaders.AUTHORIZATION, "Bearer " + clientToken)
                         .header(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE)
                         .body(adminRoleJson)
                         .retrieve()
@@ -250,7 +321,7 @@ public class KeycloakClient {
                 try {
                     restClient.post()
                             .uri("/admin/realms/{realm}/clients/{clientUuid}/roles", Map.of("realm", realmName, "clientUuid", clientUuid))
-                            .header(HttpHeaders.AUTHORIZATION, "Bearer " + adminToken)
+                            .header(HttpHeaders.AUTHORIZATION, "Bearer " + clientToken)
                             .header(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE)
                             .body(userRoleJson)
                             .retrieve()
@@ -266,14 +337,14 @@ public class KeycloakClient {
     }
 
     public String createKeycloakUser(KeycloakDTO userDto){
-        ensureAdminToken();
+       ensureClientToken();
 
         List<Map<String, Object>> existingUsers = restClient.get()
                 .uri("/admin/realms/{realm}/users?username={username}", Map.of(
                         "realm", realmName,
                         "username", userDto.getUsername()
                 ))
-                .header(HttpHeaders.AUTHORIZATION, "Bearer " + adminToken)
+                .header(HttpHeaders.AUTHORIZATION, "Bearer " + clientToken)
                 .retrieve()
                 .body(List.class);
 
@@ -302,7 +373,7 @@ public class KeycloakClient {
 
         ResponseEntity<Void> response = restClient.post()
                 .uri(url, Map.of("realm", realmName))
-                .header(HttpHeaders.AUTHORIZATION, "Bearer " + adminToken)
+                .header(HttpHeaders.AUTHORIZATION, "Bearer " + clientToken)
                 .header(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE)
                 .body(userBody)
                 .retrieve()
@@ -324,14 +395,14 @@ public class KeycloakClient {
     }
 
     public String getKeycloakUserId(String username){
-        ensureAdminToken();
+        ensureClientToken();
 
         UserRepresentation[] users = restClient.get()
                 .uri(uriBuilder -> uriBuilder
                         .path("/admin/realms/{realm}/users")
                         .queryParam("username", username)
                         .build(Map.of("realm", realmName)))
-                .header(HttpHeaders.AUTHORIZATION, "Bearer " + adminToken)
+                .header(HttpHeaders.AUTHORIZATION, "Bearer " + clientToken)
                 .retrieve()
                 .body(UserRepresentation[].class);
 
@@ -342,8 +413,23 @@ public class KeycloakClient {
         }
     }
 
+    public boolean emailExists(String email) {
+        ensureClientToken();
+
+        UserRepresentation[] users = restClient.get()
+                .uri(uriBuilder -> uriBuilder
+                        .path("/admin/realms/{realm}/users")
+                        .queryParam("email", email)
+                        .build(Map.of("realm", realmName)))
+                .header(HttpHeaders.AUTHORIZATION, "Bearer " + clientToken)
+                .retrieve()
+                .body(UserRepresentation[].class);
+
+        return users != null && users.length > 0;
+    }
+
     public UserRepresentation getUserById(String userId) {
-        ensureAdminToken();
+        ensureClientToken();
 
         try {
             return restClient.get()
@@ -362,16 +448,40 @@ public class KeycloakClient {
         }
     }
 
+    public List<UserRepresentation> getAllUsers(){
+        ensureClientToken();
+
+        try {
+            List<UserRepresentation> users = restClient.get()
+                    .uri("/admin/realms/{realm}/users", realmName)
+                    .header(HttpHeaders.AUTHORIZATION, "Bearer " + clientToken)
+                    .retrieve()
+                    .body(new ParameterizedTypeReference<List<UserRepresentation>>() {});
+
+            if (users == null || users.isEmpty()) {
+                System.out.println("No users found in realm: " + realmName);
+                return List.of();
+            }
+
+            System.out.println("Found " + users.size() + " users in realm '" + realmName + "'");
+            return users;
+
+        } catch (HttpClientErrorException e) {
+            System.err.println("Error fetching users: " + e.getStatusCode() + " - " + e.getResponseBodyAsString());
+            throw e;
+        }
+    }
+
 
     public void assignRoleToUser(KeycloakDTO userDTO) {
-        ensureAdminToken();
+        ensureClientToken();
 
         String roleName = userDTO.getRole().toString();
 
         Map<String, Object> role = restClient.get()
                 .uri("/admin/realms/{realm}/clients/{clientUuid}/roles/{roleName}",
                         Map.of("realm", realmName, "clientUuid", clientUuid, "roleName", roleName))
-                .header(HttpHeaders.AUTHORIZATION, "Bearer " + adminToken)
+                .header(HttpHeaders.AUTHORIZATION, "Bearer " + clientToken)
                 .retrieve()
                 .body(Map.class);
 
@@ -390,7 +500,7 @@ public class KeycloakClient {
         restClient.post()
                 .uri("/admin/realms/{realm}/users/{userId}/role-mappings/clients/{clientUuid}",
                         Map.of("realm", realmName, "userId", userId, "clientUuid", clientUuid))
-                .header(HttpHeaders.AUTHORIZATION, "Bearer " + adminToken)
+                .header(HttpHeaders.AUTHORIZATION, "Bearer " + clientToken)
                 .header(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE)
                 .body(List.of(roleRepresentation)) // ✅ Keycloak expects a list
                 .retrieve()
@@ -401,7 +511,7 @@ public class KeycloakClient {
 
 
     public void deleteKeycloakUser(String keycloakUserId){
-        ensureAdminToken();
+        ensureClientToken();
 
         if(getUserById(keycloakUserId) != null){
             restClient.delete()
@@ -409,7 +519,7 @@ public class KeycloakClient {
                             "realm", realmName,
                             "userId", keycloakUserId
                     ))
-                    .header(HttpHeaders.AUTHORIZATION, "Bearer " + adminToken)
+                    .header(HttpHeaders.AUTHORIZATION, "Bearer " + clientToken)
                     .retrieve()
                     .toBodilessEntity();
 
@@ -424,6 +534,8 @@ public class KeycloakClient {
         ensureRealmExists();
 
         clientUuid = createClient();
+
+        assignAdminRolesToClient();
 
         clientSecret = fetchClientSecret();
 

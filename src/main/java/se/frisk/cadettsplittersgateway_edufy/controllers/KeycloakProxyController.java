@@ -6,6 +6,8 @@ import se.frisk.cadettsplittersgateway_edufy.dtos.KeycloakDTO;
 import se.frisk.cadettsplittersgateway_edufy.enums.KeycloakRoles;
 import se.frisk.cadettsplittersgateway_edufy.services.KeycloakServiceImpl;
 
+import java.util.List;
+
 @RestController
 @RequestMapping("/keycloak")
 
@@ -18,6 +20,10 @@ public class KeycloakProxyController {
         this.keycloakServiceImpl = keycloakServiceImpl;
     }
 
+    @GetMapping("/users")
+    public ResponseEntity<List<KeycloakDTO>> getUsers() {
+        return ResponseEntity.ok(keycloakServiceImpl.getAllKeycloakUsers());
+    }
 
     @PostMapping("/newuser")
     public ResponseEntity<String> newUser(@RequestBody KeycloakDTO userDTO) {
@@ -36,5 +42,10 @@ public class KeycloakProxyController {
         return ResponseEntity.ok("User role set to: " + userDTO.getRole() + ".");
     }
 
+    @DeleteMapping("/deleteuser/{username}")
+    public ResponseEntity<String> deleteUser(@PathVariable String username) {
+        keycloakServiceImpl.deleteKeycloakUser(keycloakServiceImpl.getKeycloakUserId(username));
+        return ResponseEntity.ok("User " + username + " deleted.");
+    }
 
 }
