@@ -23,8 +23,8 @@ spring:
     oauth2:
       resourceserver:
         jwt:
-          issuer-uri: http://localhost:8080/realms/edufy_realm
-          jwk-set-uri: http://localhost:8080/realms/edufy_realm/protocol/openid-connect/certs
+          issuer-uri: http://keycloak:8080/realms/edufy-realm
+          jwk-set-uri: http://keycloak:8080/realms/edufy-realm/protocol/openid-connect/certs
 
 
   cloud:
@@ -92,3 +92,8 @@ spring:
 
   profiles:
     active: prod
+
+logging:
+  level:
+    org.springframework.security: DEBUG
+

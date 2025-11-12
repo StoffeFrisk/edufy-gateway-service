@@ -29,33 +29,48 @@ public class JwtAuthConverter implements Converter<Jwt, AbstractAuthenticationTo
     public AbstractAuthenticationToken convert(@NonNull Jwt jwt) {
         Collection<GrantedAuthority> authorities = Stream.concat(
                         jwtGrantedAuthoritiesConverter.convert(jwt).stream(),
-                        extractResourceRoles(jwt).stream())
+                        Stream.concat(
+                                extractResourceRoles(jwt).stream(),
+                                extractRealmRoles(jwt).stream()
+                        )
+                )
                 .collect(Collectors.toSet());
 
-        return new JwtAuthenticationToken(jwt, authorities, getPrincipleClaimName(jwt));
+        return new JwtAuthenticationToken(jwt, authorities, getPrincipalClaimName(jwt));
     }
 
     private final Collection<? extends GrantedAuthority> extractResourceRoles(Jwt jwt){
         Collection<String> resourceRoles;
         Map<String, Object> resourceAccess;
         Map<String, Object> resource;
-        if (!jwt.hasClaim("resource_access")){
-            return Set.of();
-        }
+        if (!jwt.hasClaim("resource_access")) return Set.of();
+
         resourceAccess = jwt.getClaim("resource_access");
-        if(!resourceAccess.containsKey(resourceIdName)){
-            return Set.of();
-        }
+        if(!resourceAccess.containsKey(resourceIdName)) return Set.of();
+
         resource = (Map<String, Object>) resourceAccess.get(resourceIdName);
-        if(!resource.containsKey("roles")){
-            return Set.of();
-        }
+        if(!resource.containsKey("roles")) return Set.of();
+
         resourceRoles = (Collection<String>) resource.get("roles");
-        return resourceRoles.stream().map(role -> new SimpleGrantedAuthority("ROLE_" + role)).collect(Collectors.toSet());
+        return resourceRoles.stream()
+                .map(role -> new SimpleGrantedAuthority("ROLE_" + role))
+                .collect(Collectors.toSet());
+    }
+
+    private Collection<? extends GrantedAuthority> extractRealmRoles(Jwt jwt) {
+        if (!jwt.hasClaim("realm_access")) return Set.of();
+
+        Map<String, Object> realmAccess = jwt.getClaim("realm_access");
+        if (!realmAccess.containsKey("roles")) return Set.of();
+
+        Collection<String> roles = (Collection<String>) realmAccess.get("roles");
+        return roles.stream()
+                .map(role -> new SimpleGrantedAuthority("ROLE_" + role))
+                .collect(Collectors.toSet());
     }
 
 
-    private String getPrincipleClaimName(Jwt jwt){
+    private String getPrincipalClaimName(Jwt jwt){
         String claimName = JwtClaimNames.SUB;
         if(principleAttribute !=null && !principleAttribute.isEmpty()){
             claimName = principleAttribute;

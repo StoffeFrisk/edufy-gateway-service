@@ -35,11 +35,10 @@ public class SecurityConfig {
                                 .sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .authorizeHttpRequests(auth ->                                  //Lynsey Fox
                         auth
-                                .requestMatchers("/keycloak/setup").permitAll()
-                              //  .requestMatchers("/keycloak/**").hasRole("edufy_ADMIN")
-                                //.requestMatchers("/api/**").hasAnyRole("edufy_ADMIN","edufy_USER")
-                                //.anyRequest().authenticated()
-                                .anyRequest().permitAll()
+                              .requestMatchers("/keycloak/**").hasRole("edufy_ADMIN")
+                              .requestMatchers("/api/**").hasAnyRole("edufy_ADMIN","edufy_USER")
+                              .anyRequest().authenticated()
+
                 )
                 .oauth2ResourceServer(oauth2->                                  //Lynsey Fox
                         oauth2

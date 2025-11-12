@@ -15,6 +15,8 @@ import se.frisk.cadettsplittersgateway_edufy.dtos.KeycloakDTO;
 import se.frisk.cadettsplittersgateway_edufy.dtos.RoleDTO;
 import se.frisk.cadettsplittersgateway_edufy.dtos.UserRepresentation;
 import se.frisk.cadettsplittersgateway_edufy.enums.KeycloakRoles;
+import se.frisk.cadettsplittersgateway_edufy.exceptions.UserNotFoundException;
+
 import java.net.URI;
 import java.time.Instant;
 import java.util.*;
@@ -28,30 +30,30 @@ public class KeycloakClient {
     private final String kcBootstrapAdminPassword;
     private final String realmName;
     private final String clientId;
-    private final String keycloakUrl;
     private String adminToken;
     private Instant tokenExpiry;
-    private List<String> redirectUris = List.of("http://localhost:4505/*");
+    private final List<String> redirectUris = List.of("http://edufy-gateway-service:4505/*");
     private String clientUuid;
     private String clientSecret;
     private String clientToken;
     private static final Set<String> ADMIN_ROLES = Set.of(
             "manage-users",
-            "view-users",
-            "view-clients",
-            "manage-clients"
+            "manage-clients",
+            "manage-realm",
+            "query-users",
+            "query-clients",
+            "view-realm"
     );
 
     public KeycloakClient(@Value("${keycloak.kcBootstrapAdminUsername}") String kcBootstrapAdminUsername,
                           @Value("${keycloak.kcBootstrapAdminPassword}") String kcBootstrapAdminPassword,
                           @Value("${keycloak.auth-server-url}") String keycloakUrl,
                           @Value("${keycloak.realm}") String realmName,
-                          @Value ("${KEYCLOAK_CLIENT_ID}") String clientId) {
+                          @Value ("${keycloak.client-id}") String clientId) {
         this.kcBootstrapAdminUsername = kcBootstrapAdminUsername;
         this.kcBootstrapAdminPassword = kcBootstrapAdminPassword;
         this.realmName = realmName;
         this.clientId = clientId;
-        this.keycloakUrl = keycloakUrl;
 
         this.restClient = RestClient.builder()
                 .baseUrl(keycloakUrl)
@@ -59,6 +61,34 @@ public class KeycloakClient {
                 .build();
 
     }
+
+    public void addAudienceMapperToClient(String clientUuid) {
+        ensureAdminToken();
+
+        Map<String, Object> mapperBody = Map.of(
+                "name", "audience-mapper",
+                "protocol", "openid-connect",
+                "protocolMapper", "oidc-audience-mapper",
+                "consentRequired", false,
+                "config", Map.of(
+                        "included.client.audience", clientId,
+                        "id.token.claim", "true",
+                        "access.token.claim", "true"
+                )
+        );
+
+        restClient.post()
+                .uri("/admin/realms/{realm}/clients/{clientUuid}/protocol-mappers/models",
+                        Map.of("realm", realmName, "clientUuid", clientUuid))
+                .header(HttpHeaders.AUTHORIZATION, "Bearer " + adminToken)
+                .header(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE)
+                .body(mapperBody)
+                .retrieve()
+                .toBodilessEntity();
+
+        System.out.println("✅ Added audience mapper for client " + clientId);
+    }
+
 
     private void ensureAdminToken() {
         if (adminToken == null || Instant.now().isAfter(tokenExpiry)) {
@@ -123,6 +153,7 @@ public class KeycloakClient {
         this.tokenExpiry = Instant.now().plusSeconds(expiresIn - 10);
 
         System.out.println("Fetched new client token, expires in " + expiresIn + " seconds.");
+        System.out.println("Client token: " + clientToken);
 
         return clientToken;
     }
@@ -184,7 +215,8 @@ public class KeycloakClient {
                 "redirectUris", redirectUris,
                 "serviceAccountsEnabled", true,
                 "directAccessGrantsEnabled", true,
-                "standardFlowEnabled", false
+                "standardFlowEnabled", false,
+                "authorizationServicesEnabled", true
         );
 
         ResponseEntity<Void> response = restClient.post()
@@ -215,7 +247,9 @@ public class KeycloakClient {
                 .body(Map.class);
 
         if (response != null && response.containsKey("value")) {
-            return (String) response.get("value");
+            this.clientSecret = (String) response.get("value");
+            System.out.println("Client secret: " + this.clientSecret);
+            return clientSecret;
         }
 
         throw new RuntimeException("Failed to fetch client secret for " + clientUuid);
@@ -233,7 +267,7 @@ public class KeycloakClient {
         String serviceUserId = (String) serviceAccount.get("id");
 
         List<Map<String, Object>> realmManagement   = restClient.get()
-                .uri("/admin/realms/{realm}/clients?clientId=realm-managment",realmName)
+                .uri("/admin/realms/{realm}/clients?clientId=realm-management",realmName)
                 .header(HttpHeaders.AUTHORIZATION, "Bearer " + adminToken)
                 .retrieve()
                 .body(List.class);
@@ -264,11 +298,28 @@ public class KeycloakClient {
     public List<RoleDTO> getAdminRoles() {
         ensureAdminToken();
 
+
+        List<Map<String, Object>> realmManagementClients = restClient.get()
+                .uri("/admin/realms/{realm}/clients?clientId=realm-management", realmName)
+                .header(HttpHeaders.AUTHORIZATION, "Bearer " + adminToken)
+                .retrieve()
+                .body(List.class);
+
+        if (realmManagementClients == null || realmManagementClients.isEmpty()) {
+            throw new RuntimeException("Could not find realm-management client when fetching admin roles");
+        }
+
+        String realmManagementId = (String) realmManagementClients.get(0).get("id");
+
         RoleDTO[] roleArray = restClient.get()
-                .uri("/admin/realms/{realm}/roles", Map.of("realm", realmName))
+                .uri("/admin/realms/{realm}/clients/{clientId}/roles", Map.of(
+                        "realm", realmName,
+                        "clientId", realmManagementId
+                ))
                 .header(HttpHeaders.AUTHORIZATION, "Bearer " + adminToken)
                 .retrieve()
                 .body(RoleDTO[].class);
+
 
         return Arrays.stream(roleArray)
                 .filter(r -> ADMIN_ROLES.contains(r.getName()))
@@ -409,7 +460,7 @@ public class KeycloakClient {
         if (users != null && users.length > 0) {
             return users[0].getId();
         } else {
-            return null;
+            throw new UserNotFoundException(username);
         }
     }
 
@@ -536,6 +587,8 @@ public class KeycloakClient {
         clientUuid = createClient();
 
         assignAdminRolesToClient();
+
+        addAudienceMapperToClient(clientUuid);
 
         clientSecret = fetchClientSecret();
 
