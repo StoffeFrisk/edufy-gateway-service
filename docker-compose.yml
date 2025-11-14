@@ -4,17 +4,17 @@ networks:
     external: true
 
 volumes:
- # db-music:
-  #db-pod:
-  #db-video:
+  db-music:
+  db-pod:
+  db-video:
   db-ratings:
   db-user:
-  #db-album:
-  #db-artist:
-  #db-history:
+  db-album:
+  db-artist:
+  db-history:
 
 services:
-  # =============== GATEWAY ===============
+  # ==================== GATEWAY ====================
   edufy-gateway-service:
     build:
       context: ../edufy-gateway-service
@@ -55,116 +55,151 @@ services:
       - cadett-splitters-net
     restart: unless-stopped
 
-  # =============== MUSIC ===========================
- # db-music:
-  #  image: mysql:8
- #   container_name: db-music
-#    environment:
-    #  MYSQL_DATABASE: music
-   #   MYSQL_USER: cadett-splitters
-  #    MYSQL_PASSWORD: cspwd
- #     MYSQL_ROOT_PASSWORD: rootpwd
-#    volumes:
-    #  - db-music:/var/lib/mysql
-   # networks:
-  #    - cadett-splitters-net
- #   restart: unless-stopped
-#    healthcheck:
-     # test: ["CMD", "mysqladmin", "ping", "-h", "127.0.0.1", "-uroot", "-prootpwd", "--silent"]
-    #  interval: 5s
-   #   timeout: 3s
-  #    retries: 30
+  # ==================== HISTORY ====================
+  db-history:
+    image: mysql:8
+    container_name: db-history
+    environment:
+      MYSQL_DATABASE: history
+      MYSQL_USER: cadett-splitters
+      MYSQL_PASSWORD: cspwd
+      MYSQL_ROOT_PASSWORD: rootpwd
+    volumes:
+      - db-history:/var/lib/mysql
+    networks:
+      - cadett-splitters-net
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "127.0.0.1", "-uroot", "-prootpwd", "--silent"]
+      interval: 5s
+      timeout: 3s
+      retries: 30
 
- # edufy-music-service:
-#    build:
-     # context: ../edufy-music-service
-    #  dockerfile: Dockerfile
-   # container_name: edufy-music-service
-  #  depends_on:
- #     db-music:
-#        condition: service_healthy
- #   environment:
-      #SPRING_DATASOURCE_URL: jdbc:mysql://db-music:3306/music?useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC
-      #SPRING_DATASOURCE_USERNAME: cadett-splitters
-      #SPRING_DATASOURCE_PASSWORD: cspwd
-     # SERVER_PORT: 4525
-    #networks:
-    #  - cadett-splitters-net
-   # restart: unless-stopped
+  edufy-history-service:
+    build:
+      context: ../edufy-history-service
+    container_name: edufy-history-service
+    depends_on:
+      db-history:
+        condition: service_healthy
+    environment:
+      SPRING_DATASOURCE_URL: jdbc:mysql://db-history:3306/history?useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC
+      SPRING_DATASOURCE_USERNAME: cadett-splitters
+      SPRING_DATASOURCE_PASSWORD: cspwd
+      SERVER_PORT: 4595
+    networks:
+      - cadett-splitters-net
+    restart: unless-stopped
 
-  # =============== POD =============================
-  #db-pod:
-   # image: mysql:8
-  #  container_name: db-pod
- #   environment:
-      #MYSQL_DATABASE: pod
-      #MYSQL_USER: cadett-splitters
-      #MYSQL_PASSWORD: cspwd
-     # MYSQL_ROOT_PASSWORD: rootpwd
-    #volumes:
-     # - db-pod:/var/lib/mysql
-    #networks:
-   #   - cadett-splitters-net
-  #  restart: unless-stopped
- #   healthcheck:
-     # test: ["CMD", "mysqladmin", "ping", "-h", "127.0.0.1", "-uroot", "-prootpwd", "--silent"]
-    #  interval: 5s
-  #    timeout: 3s
-   #   retries: 30
+  # ==================== MUSIC ======================
+  db-music:
+    image: mysql:8
+    container_name: db-music
+    environment:
+      MYSQL_DATABASE: music
+      MYSQL_USER: cadett-splitters
+      MYSQL_PASSWORD: cspwd
+      MYSQL_ROOT_PASSWORD: rootpwd
+    volumes:
+      - db-music:/var/lib/mysql
+    networks:
+      - cadett-splitters-net
+    restart: unless-stopped
+    healthcheck:
+      test: [ "CMD", "mysqladmin", "ping", "-h", "127.0.0.1", "-uroot", "-prootpwd", "--silent" ]
+      interval: 5s
+      timeout: 3s
+      retries: 30
 
- # edufy-pod-service:
-    #build:
-    #  context: ../edufy-pod-service
-   #   dockerfile: Dockerfile
-  #  container_name: edufy-pod-service
- #   depends_on:
- #     db-pod:
- #       condition: service_healthy
-   # environment:
-   #   SPRING_DATASOURCE_URL: jdbc:mysql://db-pod:3306/pod?useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC
-  #    SPRING_DATASOURCE_USERNAME: cadett-splitters
- #     SPRING_DATASOURCE_PASSWORD: cspwd
-#      SERVER_PORT: 4535
-   # networks:
-    #  - cadett-splitters-net
-    #restart: unless-stopped
+  edufy-music-service:
+    build:
+      context: ../edufy-music-service
+    container_name: edufy-music-service
+    depends_on:
+      db-music:
+        condition: service_healthy
+    environment:
+      SPRING_DATASOURCE_URL: jdbc:mysql://db-music:3306/music?useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC
+      SPRING_DATASOURCE_USERNAME: cadett-splitters
+      SPRING_DATASOURCE_PASSWORD: cspwd
+      SERVER_PORT: 4525
+    networks:
+      - cadett-splitters-net
+    restart: unless-stopped
 
-  # =============== VIDEO ===========================
-  #db-video:
-    #image: mysql:8
-    #container_name: db-video
-    #environment:
-      #MYSQL_DATABASE: video
-      #MYSQL_USER: cadett-splitters
-     # MYSQL_PASSWORD: cspwd
-     # MYSQL_ROOT_PASSWORD: rootpwd
-    #volumes:
-    #  - db-video:/var/lib/mysql
-   # networks:
-  #    - cadett-splitters-net
- #   restart: unless-stopped
-#    healthcheck:
-      #test: ["CMD", "mysqladmin", "ping", "-h", "127.0.0.1", "-uroot", "-prootpwd", "--silent"]
-     # interval: 5s
-    #  timeout: 3s
-   #   retries: 30
+  # ==================== POD ========================
+  db-pod:
+    image: mysql:8
+    container_name: db-pod
+    environment:
+      MYSQL_DATABASE: pod
+      MYSQL_USER: cadett-splitters
+      MYSQL_PASSWORD: cspwd
+      MYSQL_ROOT_PASSWORD: rootpwd
+    volumes:
+      - db-pod:/var/lib/mysql
+    networks:
+      - cadett-splitters-net
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "127.0.0.1", "-uroot", "-prootpwd", "--silent"]
+      interval: 5s
+      timeout: 3s
+      retries: 30
 
-  #edufy-video-service:
-    #build:
-   #   context: ../edufy-video-service
-  #    dockerfile: Dockerfile
- #   container_name: edufy-video-service
-#    depends_on:
-    #  db-video:
-   #     condition: service_healthy
-  #  environment:
- #     SPRING_DATASOURCE_URL: jdbc:mysql://db-video:3306/video?useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC
- #     SPRING_DATASOURCE_USERNAME: cadett-splitters
-#      SPRING_DATASOURCE_PASSWORD: cspwd
-#      SERVER_PORT: 4545
-#    networks:
-#      - cadett-splitters-net
-   # restart: unless-stopped
+  edufy-pod-service:
+    build:
+      context: ../edufy-pod-service
+    container_name: edufy-pod-service
+    depends_on:
+      db-pod:
+        condition: service_healthy
+    environment:
+      SPRING_DATASOURCE_URL: jdbc:mysql://db-pod:3306/pod?useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC
+      SPRING_DATASOURCE_USERNAME: cadett-splitters
+      SPRING_DATASOURCE_PASSWORD: cspwd
+      SERVER_PORT: 4535
+    networks:
+      - cadett-splitters-net
+    restart: unless-stopped
+
+  # ==================== VIDEO ======================
+  db-video:
+    image: mysql:8
+    container_name: db-video
+    environment:
+      MYSQL_DATABASE: video
+      MYSQL_USER: cadett-splitters
+      MYSQL_PASSWORD: cspwd
+      MYSQL_ROOT_PASSWORD: rootpwd
+    volumes:
+      - db-video:/var/lib/mysql
+    networks:
+      - cadett-splitters-net
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "127.0.0.1", "-uroot", "-prootpwd", "--silent"]
+      interval: 5s
+      timeout: 3s
+      retries: 30
+
+  edufy-video-service:
+    build:
+      context: ../edufy-video-service
+    container_name: edufy-video-service
+    depends_on:
+      db-video:
+        condition: service_healthy
+    environment:
+      SPRING_DATASOURCE_URL: jdbc:mysql://db-video:3306/video?useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC
+      SPRING_DATASOURCE_USERNAME: cadett-splitters
+      SPRING_DATASOURCE_PASSWORD: cspwd
+      SERVER_PORT: 4545
+      SERVICES_ARTIST_BASE_URL: http://edufy-artist-service:4555
+      SERVICES_ALBUM_BASE_URL:  http://edufy-album-service:4565
+    networks:
+      - cadett-splitters-net
+    restart: unless-stopped
 
   # =============== RATINGS ===========================
   db-ratings:
@@ -203,7 +238,7 @@ services:
       - cadett-splitters-net
     restart: unless-stopped
 
-  # =============== USER ============================
+  # ==================== USER =======================
   db-user:
     image: mysql:8
     container_name: db-user
@@ -240,165 +275,97 @@ services:
       - cadett-splitters-net
     restart: unless-stopped
 
-  # =============== ALBUM ===========================
-  #db-album:
-  #  image: mysql:8
- #   container_name: db-album
-    #environment:
-      #MYSQL_DATABASE: album
-      #MYSQL_USER: cadett-splitters
-      #MYSQL_PASSWORD: cspwd
-     # MYSQL_ROOT_PASSWORD: rootpwd
-    #volumes:
-     # - db-album:/var/lib/mysql
-    #networks:
-     # - cadett-splitters-net
-    #restart: unless-stopped
-    #healthcheck:
-      #test: ["CMD", "mysqladmin", "ping", "-h", "127.0.0.1", "-uroot", "-prootpwd", "--silent"]
-     # interval: 5s
-    #  timeout: 3s
-   #   retries: 30
-
-  #edufy-album-service:
-    #build:
-     # context: ../edufy-album-service
-    #  dockerfile: Dockerfile
-    #container_name: edufy-album-service
-    #depends_on:
-     # db-album:
-     #   condition: service_healthy
-    #environment:
-      #SPRING_DATASOURCE_URL: jdbc:mysql://db-album:3306/album?useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC
-      #SPRING_DATASOURCE_USERNAME: cadett-splitters
-      #SPRING_DATASOURCE_PASSWORD: cspwd
-     # SERVER_PORT: 4565
-    #networks:
-    #  - cadett-splitters-net
-   # restart: unless-stopped
-
-  # =============== ARTIST ==========================
-  #db-artist:
-    #image: mysql:8
-    #container_name: db-artist
-    #environment:
-      #MYSQL_DATABASE: artist
-      #MYSQL_USER: cadett-splitters
-      #MYSQL_PASSWORD: cspwd
-     # MYSQL_ROOT_PASSWORD: rootpwd
-    #volumes:
-     # - db-artist:/var/lib/mysql
-    #networks:
-     # - cadett-splitters-net
-    #restart: unless-stopped
-    #healthcheck:
-      #test: ["CMD", "mysqladmin", "ping", "-h", "127.0.0.1", "-uroot", "-prootpwd", "--silent"]
-     # interval: 5s
-    #  timeout: 3s
-   #   retries: 30
-
-  #edufy-artist-service:
-    #build:
-      #context: ../edufy-artist-service
-     # dockerfile: Dockerfile
-    #container_name: edufy-artist-service
-    #depends_on:
-      #db-artist:
-     #   condition: service_healthy
-    #environment:
-      #SPRING_DATASOURCE_URL: jdbc:mysql://db-artist:3306/artist?useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC
-      #SPRING_DATASOURCE_USERNAME: cadett-splitters
-      #SPRING_DATASOURCE_PASSWORD: cspwd
-     # SERVER_PORT: 4555
-    #networks:
-    #  - cadett-splitters-net
-   # restart: unless-stopped
-
-  # =============== RECOMMENDATIONS ==================
-
-  #edufy-recommendations-service:
-    #build:
-      #context: ../edufy-recommendations-service
-     # dockerfile: Dockerfile
-    #container_name: edufy-recommendations-service
-    #depends_on:
-      #- edufy-ratings-service
-     # - edufy-history-service
-    #environment:
-      # Spring-port
-      #SERVER_PORT: 4575
-
-      # Base-URL:er till andra tjänster (stateless integration)
-      #APP_SERVICES_HISTORYBASEURL: http://edufy-history-service:4595
-     # APP_SERVICES_RATINGSBASEURL: http://edufy-ratings-service:4585
-    #networks:
-    #  - cadett-splitters-net
-   # restart: unless-stopped
-
-  # =============== HISTORY =========================
-  #db-history:
-    #image: mysql:8
-    #container_name: db-history
-    #environment:
-      #MYSQL_DATABASE: history
-      #MYSQL_USER: cadett-splitters
-      #MYSQL_PASSWORD: cspwd
-     # MYSQL_ROOT_PASSWORD: rootpwd
-    #volumes:
-    #  - db-history:/var/lib/mysql
-   # networks:
-  #    - cadett-splitters-net
- #   restart: unless-stopped
-#    healthcheck:
-      #test: ["CMD", "mysqladmin", "ping", "-h", "127.0.0.1", "-uroot", "-prootpwd", "--silent"]
-     # interval: 5s
-    #  timeout: 3s
-   #   retries: 30
-
-  #edufy-history-service:
-   # build:
-    #  context: ../edufy-history-service
-     # dockerfile: Dockerfile
-#    container_name: edufy-history-service
- #   depends_on:
-  #    db-history:
-   #     condition: service_healthy
-    #environment:
-     # SPRING_DATASOURCE_URL: jdbc:mysql://db-history:3306/history?useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC
-      #SPRING_DATASOURCE_USERNAME: cadett-splitters
-      #SPRING_DATASOURCE_PASSWORD: cspwd
-      #SERVER_PORT: 4595
-    #networks:
-     # - cadett-splitters-net
-    #restart: unless-stopped
-
-  #  =============== KEYCLOAK ==================
-  keycloak:
-    image: quay.io/keycloak/keycloak:26.4.2
-    command:
-      - start-dev
-      - --health-enabled=true
-      - --http-management-port=9090
+  # ==================== ALBUM ======================
+  db-album:
+    image: mysql:8
+    container_name: db-album
     environment:
-      - KEYCLOAK_AUTH_SERVER_URL=http://keycloak:8080
-      - KEYCLOAK_REALM=edufy-realm
-      - KEYCLOAK_CLIENT_ID=admin-cli
-      - KC_BOOTSTRAP_ADMIN_USERNAME=BSadmin
-      - KC_BOOTSTRAP_ADMIN_PASSWORD=BSadmin
-      - KC_HOSTNAME=keycloak
-      - KC_HOSTNAME=http://localhost:8080
-      - KC_HOSTNAME_ADMIN_URL=http://localhost:8080
-      - KC_HOSTNAME_STRICT=false
-    ports:
-     - "8080:8080"
-     - "9090:9090"
-
-    healthcheck:
-     test: [ "CMD", "bash", "-c", "{ printf 'HEAD /health/ready HTTP/1.0\r\n\r\n' >&0; grep 'HTTP/1.0 200'; } 0<>/dev/tcp/localhost/9090" ]
-     interval: 10s
-     timeout: 5s
-     retries: 10
-     start_period: 20s
-
+      MYSQL_DATABASE: album
+      MYSQL_USER: cadett-splitters
+      MYSQL_PASSWORD: cspwd
+      MYSQL_ROOT_PASSWORD: rootpwd
+    volumes:
+      - db-album:/var/lib/mysql
     networks:
-     - cadett-splitters-net
+      - cadett-splitters-net
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "127.0.0.1", "-uroot", "-prootpwd", "--silent"]
+      interval: 5s
+      timeout: 3s
+      retries: 30
+
+  edufy-album-service:
+    build:
+      context: ../edufy-album-service
+    container_name: edufy-album-service
+    depends_on:
+      db-album:
+        condition: service_healthy
+    environment:
+      SPRING_DATASOURCE_URL: jdbc:mysql://db-album:3306/album?useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC
+      SPRING_DATASOURCE_USERNAME: cadett-splitters
+      SPRING_DATASOURCE_PASSWORD: cspwd
+      SERVER_PORT: 4565
+    networks:
+      - cadett-splitters-net
+    restart: unless-stopped
+
+  # ==================== ARTIST =====================
+  db-artist:
+    image: mysql:8
+    container_name: db-artist
+    environment:
+      MYSQL_DATABASE: artist
+      MYSQL_USER: cadett-splitters
+      MYSQL_PASSWORD: cspwd
+      MYSQL_ROOT_PASSWORD: rootpwd
+    volumes:
+      - db-artist:/var/lib/mysql
+    networks:
+      - cadett-splitters-net
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "127.0.0.1", "-uroot", "-prootpwd", "--silent"]
+      interval: 5s
+      timeout: 3s
+      retries: 30
+
+  edufy-artist-service:
+    build:
+      context: ../edufy-artist-service
+    container_name: edufy-artist-service
+    depends_on:
+      db-artist:
+        condition: service_healthy
+    environment:
+      SPRING_DATASOURCE_URL: jdbc:mysql://db-artist:3306/artist?useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC
+      SPRING_DATASOURCE_USERNAME: cadett-splitters
+      SPRING_DATASOURCE_PASSWORD: cspwd
+      SERVER_PORT: 4555
+      SPRING_PROFILES_ACTIVE: prod
+    networks:
+      - cadett-splitters-net
+    restart: unless-stopped
+
+  # ================= RECOMMENDATIONS ===============
+  edufy-recommendations-service:
+    build:
+      context: ../edufy-recommendations-service
+    container_name: edufy-recommendations-service
+    depends_on:
+      - edufy-ratings-service
+      - edufy-history-service
+      - edufy-music-service
+      - edufy-pod-service
+      - edufy-video-service
+    environment:
+      SERVER_PORT: 4575
+      SERVICES_HISTORY_BASE_URL: http://edufy-history-service:4595
+      SERVICES_RATINGS_BASE_URL: http://edufy-ratings-service:4585
+      SERVICES_MUSIC_BASE_URL:   http://edufy-music-service:4525
+      SERVICES_POD_BASE_URL:     http://edufy-pod-service:4535
+      SERVICES_VIDEO_BASE_URL:   http://edufy-video-service:4545
+    networks:
+      - cadett-splitters-net
+    restart: unless-stopped
