@@ -11,6 +11,8 @@ import org.springframework.security.oauth2.jwt.JwtClaimNames;
 import org.springframework.security.oauth2.server.resource.authentication.JwtAuthenticationToken;
 import org.springframework.security.oauth2.server.resource.authentication.JwtGrantedAuthoritiesConverter;
 import org.springframework.stereotype.Component;
+import reactor.core.publisher.Mono;
+
 import java.util.Collection;
 import java.util.Map;
 import java.util.Set;
@@ -18,25 +20,31 @@ import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 @Component
-public class JwtAuthConverter implements Converter<Jwt, AbstractAuthenticationToken> {
+public class ReactiveJwtAuthConverter implements Converter<Jwt, Mono<AbstractAuthenticationToken>> {
+
     private final JwtGrantedAuthoritiesConverter jwtGrantedAuthoritiesConverter = new JwtGrantedAuthoritiesConverter();
-    @Value("${jwt.auth.converter.resource-id.name}")
+
+    @Value("${jwt.auth.converter.resource-id.name:edufy-gateway-service}") // default fallback
     private String resourceIdName;
-    @Value("${jwt.auth.converter.principle-attribute}")
+
+    @Value("${jwt.auth.converter.principle-attribute:preferred_username}") // common in Keycloak
     private String principleAttribute;
 
     @Override
-    public AbstractAuthenticationToken convert(@NonNull Jwt jwt) {
-        Collection<GrantedAuthority> authorities = Stream.concat(
-                        jwtGrantedAuthoritiesConverter.convert(jwt).stream(),
-                        Stream.concat(
-                                extractResourceRoles(jwt).stream(),
-                                extractRealmRoles(jwt).stream()
-                        )
-                )
-                .collect(Collectors.toSet());
+    public Mono<AbstractAuthenticationToken> convert(@NonNull Jwt jwt) {
+        return Mono.fromCallable(() -> {
+            Collection<GrantedAuthority> authorities = Stream.concat(
+                    jwtGrantedAuthoritiesConverter.convert(jwt).stream(),
+                    Stream.concat(
+                            extractResourceRoles(jwt).stream(),
+                            extractRealmRoles(jwt).stream()
+                    )
+            ).collect(Collectors.toSet());
 
-        return new JwtAuthenticationToken(jwt, authorities, getPrincipalClaimName(jwt));
+            String principalName = getPrincipalClaimName(jwt);
+
+            return new JwtAuthenticationToken(jwt, authorities, principalName);
+        });
     }
 
     private final Collection<? extends GrantedAuthority> extractResourceRoles(Jwt jwt){

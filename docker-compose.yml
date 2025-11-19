@@ -21,31 +21,21 @@ services:
       dockerfile: Dockerfile
     container_name: edufy-gateway-service
     depends_on:
-      keycloak:
-        condition: service_healthy
-      edufy-user-service:
-        condition: service_started
-#      edufy-music-service:
-#        condition: service_started
-#      edufy-pod-service:
-#        condition: service_started
-#      edufy-video-service:
-#        condition: service_started
-      edufy-ratings-service:
-        condition: service_started
-#      edufy-album-service:
-#        condition: service_started
-#      edufy-artist-service:
-#        condition: service_started
-#      edufy-recommendations-service:
-#        condition: service_started
-#      edufy-history-service:
-#        condition: service_started
+      - keycloak
+      - edufy-user-service
+      - edufy-music-service
+      - edufy-pod-service
+      - edufy-video-service
+      - edufy-ratings-service
+      - edufy-album-service
+      - edufy-artist-service
+      - edufy-recommendations-service
+      - edufy-history-service
+    command: sh -c "sleep 120 && java -jar app.jar"
     environment:
       - KEYCLOAK_AUTH_SERVER_URL=http://keycloak:8080
       - KEYCLOAK_REALM=edufy-realm
       - KEYCLOAK_CLIENT_ID=edufy-gateway-service
-      - KEYCLOAK_CLIENT_SECRET=TNfi1ZiDHfo6X646VPCxy3YvnsKspJCE
       - KC_BOOTSTRAP_ADMIN_USERNAME=BSadmin
       - KC_BOOTSTRAP_ADMIN_PASSWORD=BSadmin
       - SERVER_PORT=4505
@@ -366,6 +356,22 @@ services:
       SERVICES_MUSIC_BASE_URL:   http://edufy-music-service:4525
       SERVICES_POD_BASE_URL:     http://edufy-pod-service:4535
       SERVICES_VIDEO_BASE_URL:   http://edufy-video-service:4545
+    networks:
+      - cadett-splitters-net
+    restart: unless-stopped
+
+  # ================= KEYCLOAK ===============
+  keycloak:
+    image: quay.io/keycloak/keycloak:26.0.0
+    container_name: keycloak
+    environment:
+      KC_BOOTSTRAP_ADMIN_USERNAME: BSadmin
+      KC_BOOTSTRAP_ADMIN_PASSWORD: BSadmin
+      KC_HTTP_ENABLED: "true"
+      KC_HOSTNAME_STRICT: "false"
+    ports:
+      - "8080:8080"
+    command: start-dev
     networks:
       - cadett-splitters-net
     restart: unless-stopped

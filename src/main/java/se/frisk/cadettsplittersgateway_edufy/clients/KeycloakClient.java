@@ -212,11 +212,13 @@ public class KeycloakClient {
                 "clientId", clientId,
                 "enabled", true,
                 "publicClient", false,
+                "protocol", "openid-connect",
                 "redirectUris", redirectUris,
-                "serviceAccountsEnabled", true,
+                "webOrigins", List.of("*"),
+                "standardFlowEnabled", true,
                 "directAccessGrantsEnabled", true,
-                "standardFlowEnabled", false,
-                "authorizationServicesEnabled", true
+                "serviceAccountsEnabled", true,
+                "implicitFlowEnabled", false
         );
 
         ResponseEntity<Void> response = restClient.post()

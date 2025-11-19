@@ -1,6 +1,7 @@
 package se.frisk.cadettsplittersgateway_edufy.controllers;
 
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 import se.frisk.cadettsplittersgateway_edufy.dtos.KeycloakDTO;
 import se.frisk.cadettsplittersgateway_edufy.enums.KeycloakRoles;
@@ -10,8 +11,7 @@ import java.util.List;
 
 @RestController
 @RequestMapping("/keycloak")
-
-
+@PreAuthorize("hasRole('edufy_ADMIN')")
 public class KeycloakProxyController {
 
     private final KeycloakServiceImpl keycloakServiceImpl;

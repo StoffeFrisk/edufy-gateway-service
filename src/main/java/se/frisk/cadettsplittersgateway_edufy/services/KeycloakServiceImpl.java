@@ -3,6 +3,7 @@ package se.frisk.cadettsplittersgateway_edufy.services;
 import jakarta.annotation.PostConstruct;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+import org.springframework.web.client.ResourceAccessException;
 import se.frisk.cadettsplittersgateway_edufy.clients.KeycloakClient;
 import se.frisk.cadettsplittersgateway_edufy.dtos.KeycloakDTO;
 import se.frisk.cadettsplittersgateway_edufy.dtos.UserRepresentation;
@@ -23,9 +24,19 @@ public class KeycloakServiceImpl implements KeycloakService {
     }
 
     @PostConstruct
-    public void init() {
-        keycloakClient.getAdminToken();
-        keycloakClient.keycloakSetup();
+    public void init() throws InterruptedException {
+        int retries = 20;
+        while (retries-- > 0) {
+            try {
+                keycloakClient.getAdminToken();
+                keycloakClient.keycloakSetup();
+                return;
+    } catch (ResourceAccessException e) {
+                System.out.println("Keycloak not ready yet, retrying in 5s...");
+                Thread.sleep(5000);
+            }
+        }
+        throw new IllegalStateException("Unable to connect to Keycloak after multiple attempts");
     }
 
     @Override
