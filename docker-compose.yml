@@ -77,6 +77,7 @@ services:
       SPRING_DATASOURCE_USERNAME: cadett-splitters
       SPRING_DATASOURCE_PASSWORD: cspwd
       SERVER_PORT: 4595
+      SPRING_PROFILES_ACTIVE: prod
     networks:
       - cadett-splitters-net
     restart: unless-stopped
@@ -113,6 +114,7 @@ services:
       SPRING_DATASOURCE_USERNAME: cadett-splitters
       SPRING_DATASOURCE_PASSWORD: cspwd
       SERVER_PORT: 4525
+      SPRING_PROFILES_ACTIVE: prod
     networks:
       - cadett-splitters-net
     restart: unless-stopped
@@ -149,6 +151,7 @@ services:
       SPRING_DATASOURCE_USERNAME: cadett-splitters
       SPRING_DATASOURCE_PASSWORD: cspwd
       SERVER_PORT: 4535
+      SPRING_PROFILES_ACTIVE: prod
     networks:
       - cadett-splitters-net
     restart: unless-stopped
@@ -185,6 +188,7 @@ services:
       SPRING_DATASOURCE_USERNAME: cadett-splitters
       SPRING_DATASOURCE_PASSWORD: cspwd
       SERVER_PORT: 4545
+      SPRING_PROFILES_ACTIVE: prod
       SERVICES_ARTIST_BASE_URL: http://edufy-artist-service:4555
       SERVICES_ALBUM_BASE_URL:  http://edufy-album-service:4565
     networks:
@@ -224,6 +228,7 @@ services:
       SPRING_DATASOURCE_USERNAME: cadett-splitters
       SPRING_DATASOURCE_PASSWORD: cspwd
       SERVER_PORT: 4585
+      SPRING_PROFILES_ACTIVE: prod
     networks:
       - cadett-splitters-net
     restart: unless-stopped
@@ -261,6 +266,9 @@ services:
       SPRING_DATASOURCE_USERNAME: cadett-splitters
       SPRING_DATASOURCE_PASSWORD: cspwd
       SERVER_PORT: 4515
+      SPRING_PROFILES_ACTIVE: prod
+    ports:
+      - "4515:4515"
     networks:
       - cadett-splitters-net
     restart: unless-stopped
@@ -297,6 +305,8 @@ services:
       SPRING_DATASOURCE_USERNAME: cadett-splitters
       SPRING_DATASOURCE_PASSWORD: cspwd
       SERVER_PORT: 4565
+      SPRING_PROFILES_ACTIVE: prod
+
     networks:
       - cadett-splitters-net
     restart: unless-stopped
@@ -351,6 +361,7 @@ services:
       - edufy-video-service
     environment:
       SERVER_PORT: 4575
+      SPRING_PROFILES_ACTIVE: prod
       SERVICES_HISTORY_BASE_URL: http://edufy-history-service:4595
       SERVICES_RATINGS_BASE_URL: http://edufy-ratings-service:4585
       SERVICES_MUSIC_BASE_URL:   http://edufy-music-service:4525
@@ -365,10 +376,14 @@ services:
     image: quay.io/keycloak/keycloak:26.0.0
     container_name: keycloak
     environment:
+      KC_HOSTNAME: keycloak
+      KC_HOSTNAME_PORT: 8080
+      KC_HOSTNAME_STRICT: false
+      KC_HOSTNAME_STRICT_HTTPS: false
+      KC_PROXY: edge
       KC_BOOTSTRAP_ADMIN_USERNAME: BSadmin
       KC_BOOTSTRAP_ADMIN_PASSWORD: BSadmin
       KC_HTTP_ENABLED: "true"
-      KC_HOSTNAME_STRICT: "false"
     ports:
       - "8080:8080"
     command: start-dev

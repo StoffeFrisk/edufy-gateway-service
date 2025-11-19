@@ -652,4 +652,19 @@ public class KeycloakClient {
 
     }
 
+    public boolean usernameExists(String username) {
+        ensureClientToken();
+
+        UserRepresentation[] users = restClient.get()
+                .uri(uriBuilder -> uriBuilder
+                        .path("/admin/realms/{realm}/users")
+                        .queryParam("username", username)
+                        .build(Map.of("realm", realmName)))
+                .header(HttpHeaders.AUTHORIZATION, "Bearer " + clientToken)
+                .retrieve()
+                .body(UserRepresentation[].class);
+
+        return users != null && users.length > 0;
+    }
+
 }

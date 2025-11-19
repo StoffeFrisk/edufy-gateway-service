@@ -36,6 +36,11 @@ public class KeycloakProxyController {
         return ResponseEntity.ok(keycloakServiceImpl.getKeycloakUserId(username));
     }
 
+    @GetMapping("/usernameexists/{username}")
+    public ResponseEntity<Boolean> usernameExists(@PathVariable String username) {
+        return ResponseEntity.ok(keycloakServiceImpl.keycloakUsernameExists(username));
+    }
+
     @PutMapping("/assignrole/")
     public ResponseEntity<String> assignRole(@RequestBody KeycloakDTO userDTO) {
         keycloakServiceImpl.assignRoleToUser(userDTO);

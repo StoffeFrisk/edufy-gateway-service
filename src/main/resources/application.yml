@@ -33,6 +33,7 @@ spring:
   main:
     web-application-type: reactive
 
+
   cloud:
     gateway:
       server:
@@ -41,26 +42,26 @@ spring:
             - id: edufy-music-service
               uri: http://edufy-music-service:4525
               predicates:
-               - Path=/api/music/**
+                - Path=/api/music/**
               filters:
-               - StripPrefix=1
-               - TokenRelay
+                - StripPrefix=1
+                - TokenRelay
 
             - id: edufy-pod-service
               uri: http://edufy-pod-service:4535
               predicates:
-               - Path=/api/pod/**
+                - Path=/api/pod/**
               filters:
-               - StripPrefix=1
-               - TokenRelay
+                - StripPrefix=1
+                - TokenRelay
 
             - id: edufy-video-service
               uri: http://edufy-video-service:4545
               predicates:
-               - Path=/api/video/**
+                - Path=/api/video/**
               filters:
-               - StripPrefix=1
-               - TokenRelay
+                - StripPrefix=1
+                - TokenRelay
 
             - id: edufy-ratings-service
               uri: http://edufy-ratings-service:4585
@@ -89,29 +90,23 @@ spring:
             - id: edufy-artist-service
               uri: http://edufy-artist-service:4555
               predicates:
-               - Path=/api/artist/**
+                - Path=/api/artist/**
               filters:
-               - StripPrefix=1
-               - TokenRelay
+                - StripPrefix=1
+                - TokenRelay
 
             - id: edufy-recommendations-service
               uri: http://edufy-recommendations-service:4575
               predicates:
                - Path=/api/recommendations/**
               filters:
-                - TokenRelay
+               - StripPrefix=1
+               - TokenRelay
 
             - id: edufy-history-service
               uri: http://edufy-history-service:4595
               predicates:
-               - Path=/api/history/**
+                - Path=/api/history/**
               filters:
-               - TokenRelay
-
-  profiles:
-    active: prod
-
-logging:
-  level:
-    org.springframework.security: DEBUG
-
+                - StripPrefix=1
+                - TokenRelay

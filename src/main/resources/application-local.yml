@@ -1,5 +1,0 @@
-keycloak:
-  auth-server-url: http://localhost:8080
-
-server:
-  port: 4505

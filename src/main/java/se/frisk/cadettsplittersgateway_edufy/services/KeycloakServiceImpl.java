@@ -56,6 +56,9 @@ public class KeycloakServiceImpl implements KeycloakService {
         return keycloakClient.createKeycloakUser(userDto);
     }
 
+    public boolean keycloakUsernameExists(String username){
+        return keycloakClient.usernameExists(username);
+    }
 
 
     @Override
