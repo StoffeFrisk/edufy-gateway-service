@@ -9,7 +9,7 @@ server:
   port: 4505
 
 keycloak:
-  auth-server-url: ${KEYCLOAK_AUTH_SERVER_URL:http://keycloak:8080}
+  auth-server-url: ${KEYCLOAK_AUTH_SERVER_URL:https://keycloak:8080}
   realm: ${KEYCLOAK_REALM:edufy-realm}
   client-id: ${KEYCLOAK_CLIENT_ID:edufy-gateway-service}
   kcBootstrapAdminUsername: ${KC_BOOTSTRAP_ADMIN_USERNAME:BSadmin}
@@ -30,6 +30,7 @@ spring:
         jwt:
           issuer-uri: http://keycloak:8080/realms/edufy-realm
           jwk-set-uri: http://keycloak:8080/realms/edufy-realm/protocol/openid-connect/certs
+
   main:
     web-application-type: reactive
 
@@ -45,7 +46,7 @@ spring:
                 - Path=/api/music/**
               filters:
                 - StripPrefix=1
-                - TokenRelay
+
 
             - id: edufy-pod-service
               uri: http://edufy-pod-service:4535
@@ -53,7 +54,7 @@ spring:
                 - Path=/api/pod/**
               filters:
                 - StripPrefix=1
-                - TokenRelay
+
 
             - id: edufy-video-service
               uri: http://edufy-video-service:4545
@@ -61,7 +62,7 @@ spring:
                 - Path=/api/video/**
               filters:
                 - StripPrefix=1
-                - TokenRelay
+
 
             - id: edufy-ratings-service
               uri: http://edufy-ratings-service:4585
@@ -69,7 +70,7 @@ spring:
                - Path=/api/ratings/**
               filters:
                - StripPrefix=1
-               - TokenRelay
+
 
             - id: edufy-user-service
               uri: http://edufy-user-service:4515
@@ -77,7 +78,7 @@ spring:
                - Path=/api/users/**
               filters:
                - StripPrefix=1
-               - TokenRelay
+
 
             - id: edufy-album-service
               uri: http://edufy-album-service:4565
@@ -85,15 +86,13 @@ spring:
                - Path=/api/album/**
               filters:
                - StripPrefix=1
-               - TokenRelay
 
             - id: edufy-artist-service
               uri: http://edufy-artist-service:4555
               predicates:
                 - Path=/api/artist/**
               filters:
-                - StripPrefix=1
-                - TokenRelay
+
 
             - id: edufy-recommendations-service
               uri: http://edufy-recommendations-service:4575
@@ -101,7 +100,7 @@ spring:
                - Path=/api/recommendations/**
               filters:
                - StripPrefix=1
-               - TokenRelay
+
 
             - id: edufy-history-service
               uri: http://edufy-history-service:4595
@@ -109,4 +108,11 @@ spring:
                 - Path=/api/history/**
               filters:
                 - StripPrefix=1
-                - TokenRelay
+
+          default-filters:
+            - TokenRelay,
+            - AddRequestHeader=Authorization,
+
+logging:
+  level:
+    org.springframework.security: DEBUG

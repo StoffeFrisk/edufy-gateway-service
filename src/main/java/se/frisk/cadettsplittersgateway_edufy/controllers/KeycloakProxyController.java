@@ -4,7 +4,6 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 import se.frisk.cadettsplittersgateway_edufy.dtos.KeycloakDTO;
-import se.frisk.cadettsplittersgateway_edufy.enums.KeycloakRoles;
 import se.frisk.cadettsplittersgateway_edufy.services.KeycloakServiceImpl;
 
 import java.util.List;
@@ -39,6 +38,12 @@ public class KeycloakProxyController {
     @GetMapping("/usernameexists/{username}")
     public ResponseEntity<Boolean> usernameExists(@PathVariable String username) {
         return ResponseEntity.ok(keycloakServiceImpl.keycloakUsernameExists(username));
+    }
+
+    @GetMapping("/getuserrole/{username}")
+    public ResponseEntity<List<String>> getUserRoles(@PathVariable String username) {
+        String userId = keycloakServiceImpl.getKeycloakUserId(username);
+        return ResponseEntity.ok(keycloakServiceImpl.getUsersRoles(userId));
     }
 
     @PutMapping("/assignrole/")

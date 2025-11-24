@@ -78,6 +78,8 @@ services:
       SPRING_DATASOURCE_PASSWORD: cspwd
       SERVER_PORT: 4595
       SPRING_PROFILES_ACTIVE: prod
+    ports:
+      - "4595:4595"
     networks:
       - cadett-splitters-net
     restart: unless-stopped
@@ -115,6 +117,8 @@ services:
       SPRING_DATASOURCE_PASSWORD: cspwd
       SERVER_PORT: 4525
       SPRING_PROFILES_ACTIVE: prod
+    ports:
+      - "4525:4525"
     networks:
       - cadett-splitters-net
     restart: unless-stopped
@@ -152,6 +156,8 @@ services:
       SPRING_DATASOURCE_PASSWORD: cspwd
       SERVER_PORT: 4535
       SPRING_PROFILES_ACTIVE: prod
+    ports:
+      - "4535:4535"
     networks:
       - cadett-splitters-net
     restart: unless-stopped
@@ -191,6 +197,8 @@ services:
       SPRING_PROFILES_ACTIVE: prod
       SERVICES_ARTIST_BASE_URL: http://edufy-artist-service:4555
       SERVICES_ALBUM_BASE_URL:  http://edufy-album-service:4565
+    ports:
+      - "4545:4545"
     networks:
       - cadett-splitters-net
     restart: unless-stopped
@@ -229,6 +237,8 @@ services:
       SPRING_DATASOURCE_PASSWORD: cspwd
       SERVER_PORT: 4585
       SPRING_PROFILES_ACTIVE: prod
+    ports:
+      - "4585:4585"
     networks:
       - cadett-splitters-net
     restart: unless-stopped
@@ -306,7 +316,8 @@ services:
       SPRING_DATASOURCE_PASSWORD: cspwd
       SERVER_PORT: 4565
       SPRING_PROFILES_ACTIVE: prod
-
+    ports:
+      - "4565:4565"
     networks:
       - cadett-splitters-net
     restart: unless-stopped
@@ -344,6 +355,8 @@ services:
       SPRING_DATASOURCE_PASSWORD: cspwd
       SERVER_PORT: 4555
       SPRING_PROFILES_ACTIVE: prod
+    ports:
+      - "4555:4555"
     networks:
       - cadett-splitters-net
     restart: unless-stopped
@@ -367,6 +380,8 @@ services:
       SERVICES_MUSIC_BASE_URL:   http://edufy-music-service:4525
       SERVICES_POD_BASE_URL:     http://edufy-pod-service:4535
       SERVICES_VIDEO_BASE_URL:   http://edufy-video-service:4545
+    ports:
+      - "4575:4575"
     networks:
       - cadett-splitters-net
     restart: unless-stopped

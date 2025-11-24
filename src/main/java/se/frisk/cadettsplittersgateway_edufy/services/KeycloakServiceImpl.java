@@ -12,6 +12,7 @@ import se.frisk.cadettsplittersgateway_edufy.exceptions.UserNotFoundException;
 import se.frisk.cadettsplittersgateway_edufy.utils.DTOConvertor;
 
 import java.util.List;
+import java.util.Map;
 
 @Service
 public class KeycloakServiceImpl implements KeycloakService {
@@ -94,15 +95,21 @@ public class KeycloakServiceImpl implements KeycloakService {
 
     }
 
+    public List<String> getUsersRoles(String userId){
+        List<Map<String,Object>> roles = keycloakClient.getUsersRoles(userId);
+        return roles
+                .stream()
+                .map(r -> (String) r.get("name"))
+                .toList();
+    }
+
     @Override
     public List<KeycloakDTO> getAllKeycloakUsers() {
         List<UserRepresentation> users = keycloakClient.getAllUsers();
 
-        List<KeycloakDTO> dtos = users.stream()
+        return users.stream()
                 .map(DTOConvertor::toKeycloakDTO)
                 .toList();
-
-        return dtos;
 
     }
 
