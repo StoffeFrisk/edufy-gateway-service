@@ -32,6 +32,7 @@ public class SecurityConfig {
                 .authorizeExchange(exchanges ->
                         exchanges
                                 .pathMatchers("/actuator/**", "/health", "/info").permitAll()
+                                .pathMatchers("/api/album/test").permitAll()
                                 .anyExchange().authenticated()
                 )
                 .oauth2ResourceServer(oauth2 ->

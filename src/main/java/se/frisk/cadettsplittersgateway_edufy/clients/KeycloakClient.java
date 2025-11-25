@@ -3,6 +3,7 @@ package se.frisk.cadettsplittersgateway_edufy.clients;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.core.ParameterizedTypeReference;
 import org.springframework.http.HttpHeaders;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Component;
@@ -87,10 +88,13 @@ public class KeycloakClient {
                 .toBodilessEntity();
 
         System.out.println("Added audience mapper for client " + clientId);
-    }catch(HttpClientErrorException e){
-            System.err.println("Status: " + e.getStatusCode());
-            System.err.println("Response: " + e.getResponseBodyAsString());
-            throw e;}
+        } catch (HttpClientErrorException e) {
+            if (e.getStatusCode() == HttpStatus.CONFLICT) {
+                System.out.println("Audience mapper already exists, skipping creation.");
+                return;
+            }
+            throw e;
+        }
     }
 
 

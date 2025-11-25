@@ -92,6 +92,7 @@ spring:
               predicates:
                 - Path=/api/artist/**
               filters:
+                - StripPrefix=1
 
 
             - id: edufy-recommendations-service
@@ -110,9 +111,13 @@ spring:
                 - StripPrefix=1
 
           default-filters:
-            - TokenRelay,
-            - AddRequestHeader=Authorization,
+            - TokenRelay
 
 logging:
   level:
+    org.springframework.cloud.gateway: DEBUG
+    org.springframework.cloud.gateway.route: DEBUG
     org.springframework.security: DEBUG
+    org.springframework.security.oauth2: DEBUG
+    org.springframework.security.jwt: DEBUG
+    org.springframework.security.oauth2.jwt: DEBUG
