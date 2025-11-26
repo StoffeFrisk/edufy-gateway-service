@@ -67,6 +67,7 @@ services:
       SPRING_DATASOURCE_USERNAME: cadett-splitters
       SPRING_DATASOURCE_PASSWORD: cspwd
       SERVER_PORT: 4595
+      SERVICES_USER_BASE_URL: http://edufy-user-service:4515/users
     networks:
       - cadett-splitters-net
     restart: unless-stopped
@@ -344,6 +345,7 @@ services:
       SERVICES_MUSIC_BASE_URL:   http://edufy-music-service:4525
       SERVICES_POD_BASE_URL:     http://edufy-pod-service:4535
       SERVICES_VIDEO_BASE_URL:   http://edufy-video-service:4545
+      SERVICES_USER_BASE_URL:    http://edufy-user-service:4515/users
     networks:
       - cadett-splitters-net
     restart: unless-stopped
