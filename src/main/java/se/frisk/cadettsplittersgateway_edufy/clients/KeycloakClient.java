@@ -160,8 +160,6 @@ public class KeycloakClient {
 
         this.tokenExpiry = Instant.now().plusSeconds(expiresIn - 10);
 
-        System.out.println("Fetched new client token, expires in " + expiresIn + " seconds.");
-
         return clientToken;
     }
 
@@ -176,7 +174,7 @@ public class KeycloakClient {
 
             System.out.println("Realm '" + realmName + "' already exists.");
         } catch (HttpClientErrorException.NotFound e) {
-            System.out.println("Creating realm '" + realmName + "'...");
+
             createRealm();
         }
     }
@@ -242,7 +240,6 @@ public class KeycloakClient {
 
         String[] parts = location.toString().split("/");
         clientUuid = parts[parts.length - 1];
-        System.out.println("Created client '" + clientId + "' with UUID: " + clientUuid);
         return clientUuid;
     }
 
@@ -299,8 +296,6 @@ public class KeycloakClient {
                 .body(selectedRoles)
                 .retrieve()
                 .toBodilessEntity();
-
-        System.out.println("Assigned realm-management roles to service account for client " + clientId);
 
     }
 
@@ -367,8 +362,6 @@ public class KeycloakClient {
                         .retrieve()
                         .toBodilessEntity();
 
-                System.out.println("Admin role created");
-
             } catch (Exception e) {
                 System.err.println("Error creating roles: " + e.getMessage());
             }
@@ -386,8 +379,6 @@ public class KeycloakClient {
                             .body(userRoleJson)
                             .retrieve()
                             .toBodilessEntity();
-
-                    System.out.println("User role created");
 
                 } catch (Exception e) {
                     System.err.println("Error creating roles: " + e.getMessage());
@@ -446,7 +437,7 @@ public class KeycloakClient {
             }
             String[] parts = locationUri.toString().split("/");
             String userId = parts[parts.length - 1];
-            System.out.println("Created user '" + userDto.getUsername() + "' with ID: " + userId);
+
             userDto.setKeycloakId(userId);
             return userId;
         } else {
@@ -523,7 +514,6 @@ public class KeycloakClient {
                 return List.of();
             }
 
-            System.out.println("Found " + users.size() + " users in realm '" + realmName + "'");
             return users;
 
         } catch (HttpClientErrorException e) {
@@ -566,7 +556,6 @@ public class KeycloakClient {
                 .retrieve()
                 .toBodilessEntity();
 
-        System.out.println("Assigned role '" + roleName + "' to user '" + userDTO.getUsername() + "'");
     }
 
 
@@ -656,6 +645,8 @@ public class KeycloakClient {
         assignRoleToUser(benjamin);
         assignRoleToUser(christoffer);
         assignRoleToUser(niklas);
+
+        System.out.println("Keycloak Realm: edufy-realm successfully set-up with client: edufy-gateway-service and pre-loaded admin and users.");
 
     }
 

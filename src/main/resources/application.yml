@@ -99,25 +99,13 @@ spring:
               uri: http://edufy-recommendations-service:4575
               predicates:
                - Path=/api/recommendations/**
-              filters:
-               - StripPrefix=1
 
 
             - id: edufy-history-service
               uri: http://edufy-history-service:4595
               predicates:
                 - Path=/api/history/**
-              filters:
-                - StripPrefix=1
 
           default-filters:
             - TokenRelay
 
-logging:
-  level:
-    org.springframework.cloud.gateway: DEBUG
-    org.springframework.cloud.gateway.route: DEBUG
-    org.springframework.security: DEBUG
-    org.springframework.security.oauth2: DEBUG
-    org.springframework.security.jwt: DEBUG
-    org.springframework.security.oauth2.jwt: DEBUG
