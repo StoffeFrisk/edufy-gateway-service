@@ -20,8 +20,10 @@ public class KeycloakProxyController {
     }
 
     @GetMapping("/users")
-    public ResponseEntity<List<UserDTO>> getUsers() {
-        return ResponseEntity.ok(keycloakServiceImpl.getAllKeycloakUsers());
+    public Mono<ResponseEntity<List<UserDTO>>> getUsers() {
+        return Mono.fromCallable(() -> keycloakServiceImpl.getAllKeycloakUsers())
+                .subscribeOn(Schedulers.boundedElastic())
+                .map(ResponseEntity::ok);
     }
 
     @PostMapping("/newuser")
@@ -34,31 +36,48 @@ public class KeycloakProxyController {
     }
 
     @GetMapping("/userid/{username}")
-    public ResponseEntity<String> getUserID(@PathVariable String username) {
-        return ResponseEntity.ok(keycloakServiceImpl.getKeycloakUserId(username));
+    public Mono<ResponseEntity<String>> getUserID(@PathVariable String username) {
+        return Mono.fromCallable(() -> keycloakServiceImpl.getKeycloakUserId(username))
+                .subscribeOn(Schedulers.boundedElastic())
+                .map(ResponseEntity::ok);
     }
 
     @GetMapping("/usernameexists/{username}")
-    public ResponseEntity<Boolean> usernameExists(@PathVariable String username) {
-        return ResponseEntity.ok(keycloakServiceImpl.keycloakUsernameExists(username));
+    public Mono<ResponseEntity<Boolean>> usernameExists(@PathVariable String username) {
+        return Mono.fromCallable(() -> keycloakServiceImpl.keycloakUsernameExists(username))
+                .subscribeOn(Schedulers.boundedElastic())
+                .map(ResponseEntity::ok);
     }
 
     @GetMapping("/getuserrole/{username}")
-    public ResponseEntity<List<String>> getUserRoles(@PathVariable String username) {
-        String userId = keycloakServiceImpl.getKeycloakUserId(username);
-        return ResponseEntity.ok(keycloakServiceImpl.getUsersRoles(userId));
+    public Mono<ResponseEntity<List<String>>> getUserRoles(@PathVariable String username) {
+        return Mono.fromCallable(() -> {
+                    String userId = keycloakServiceImpl.getKeycloakUserId(username);
+                    return keycloakServiceImpl.getUsersRoles(userId);
+                })
+                .subscribeOn(Schedulers.boundedElastic())
+                .map(ResponseEntity::ok);
     }
 
     @PutMapping("/assignrole")
-    public ResponseEntity<String> assignRole(@RequestBody UserDTO userDTO) {
-        keycloakServiceImpl.assignRoleToUser(userDTO);
-        return ResponseEntity.ok("User role set to: " + userDTO.getRole() + ".");
+    public Mono<ResponseEntity<String>> assignRole(@RequestBody UserDTO userDTO) {
+        return Mono.fromCallable(() -> {
+                    keycloakServiceImpl.assignRoleToUser(userDTO);
+                    return "User role set to: " + userDTO.getRole() + ".";
+                })
+                .subscribeOn(Schedulers.boundedElastic())
+                .map(ResponseEntity::ok);
     }
 
     @DeleteMapping("/deleteuser/{username}")
-    public ResponseEntity<String> deleteUser(@PathVariable String username) {
-        keycloakServiceImpl.deleteKeycloakUser(keycloakServiceImpl.getKeycloakUserId(username));
-        return ResponseEntity.ok("User " + username + " deleted.");
+    public Mono<ResponseEntity<String>> deleteUser(@PathVariable String username) {
+        return Mono.fromCallable(() -> {
+                    String userId = keycloakServiceImpl.getKeycloakUserId(username);
+                    keycloakServiceImpl.deleteKeycloakUser(userId);
+                    return "User " + username + " deleted.";
+                })
+                .subscribeOn(Schedulers.boundedElastic())
+                .map(ResponseEntity::ok);
     }
 
 }
