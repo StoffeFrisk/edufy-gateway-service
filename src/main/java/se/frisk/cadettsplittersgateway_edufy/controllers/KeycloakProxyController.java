@@ -1,16 +1,16 @@
 package se.frisk.cadettsplittersgateway_edufy.controllers;
 
 import org.springframework.http.ResponseEntity;
-import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
-import se.frisk.cadettsplittersgateway_edufy.dtos.KeycloakDTO;
+import reactor.core.publisher.Mono;
+import reactor.core.scheduler.Schedulers;
+import se.frisk.cadettsplittersgateway_edufy.dtos.UserDTO;
 import se.frisk.cadettsplittersgateway_edufy.services.KeycloakServiceImpl;
 
 import java.util.List;
 
 @RestController
 @RequestMapping("/keycloak")
-@PreAuthorize("hasRole('edufy_ADMIN')")
 public class KeycloakProxyController {
 
     private final KeycloakServiceImpl keycloakServiceImpl;
@@ -20,14 +20,17 @@ public class KeycloakProxyController {
     }
 
     @GetMapping("/users")
-    public ResponseEntity<List<KeycloakDTO>> getUsers() {
+    public ResponseEntity<List<UserDTO>> getUsers() {
         return ResponseEntity.ok(keycloakServiceImpl.getAllKeycloakUsers());
     }
 
     @PostMapping("/newuser")
-    public ResponseEntity<String> newUser(@RequestBody KeycloakDTO userDTO) {
-        String createdUserId = keycloakServiceImpl.createUser(userDTO);
-        return ResponseEntity.ok(createdUserId);
+    public Mono<ResponseEntity<String>> newUser(@RequestBody UserDTO userDTO) {
+        System.out.println("/keycloak/newuser endpoint hit");
+
+        return Mono.fromCallable(() -> keycloakServiceImpl.createUser(userDTO))
+                .subscribeOn(Schedulers.boundedElastic())
+                .map(ResponseEntity::ok);
     }
 
     @GetMapping("/userid/{username}")
@@ -46,8 +49,8 @@ public class KeycloakProxyController {
         return ResponseEntity.ok(keycloakServiceImpl.getUsersRoles(userId));
     }
 
-    @PutMapping("/assignrole/")
-    public ResponseEntity<String> assignRole(@RequestBody KeycloakDTO userDTO) {
+    @PutMapping("/assignrole")
+    public ResponseEntity<String> assignRole(@RequestBody UserDTO userDTO) {
         keycloakServiceImpl.assignRoleToUser(userDTO);
         return ResponseEntity.ok("User role set to: " + userDTO.getRole() + ".");
     }

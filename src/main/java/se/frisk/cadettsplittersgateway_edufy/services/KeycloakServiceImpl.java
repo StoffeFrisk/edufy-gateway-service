@@ -5,7 +5,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.ResourceAccessException;
 import se.frisk.cadettsplittersgateway_edufy.clients.KeycloakClient;
-import se.frisk.cadettsplittersgateway_edufy.dtos.KeycloakDTO;
+import se.frisk.cadettsplittersgateway_edufy.dtos.UserDTO;
 import se.frisk.cadettsplittersgateway_edufy.dtos.UserRepresentation;
 import se.frisk.cadettsplittersgateway_edufy.exceptions.UserAlreadyExistsException;
 import se.frisk.cadettsplittersgateway_edufy.exceptions.UserNotFoundException;
@@ -41,21 +41,21 @@ public class KeycloakServiceImpl implements KeycloakService {
     }
 
     @Override
-    public String createUser(KeycloakDTO userDto) {
+    public String createUser(UserDTO userDto) {
 
-        String existingUserId = getKeycloakUserId(userDto.getUsername());
-        if (existingUserId != null) {
-            throw new UserAlreadyExistsException("user", "keycloak id", existingUserId);
+        if (keycloakUsernameExists(userDto.getUsername())) {
+            throw new UserAlreadyExistsException("user", "username", userDto.getUsername());
         }
 
         String existingUserEmail = userDto.getEmail();
-        if (keycloakClient.emailExists(existingUserEmail)){
+        if (keycloakClient.emailExists(existingUserEmail)) {
             throw new UserAlreadyExistsException("user", "email", existingUserEmail);
         }
 
 
         return keycloakClient.createKeycloakUser(userDto);
     }
+
 
     public boolean keycloakUsernameExists(String username){
         return keycloakClient.usernameExists(username);
@@ -80,7 +80,7 @@ public class KeycloakServiceImpl implements KeycloakService {
     }
 
     @Override
-    public void assignRoleToUser(KeycloakDTO userDto) {
+    public void assignRoleToUser(UserDTO userDto) {
 
         String userId = userDto.getKeycloakId();
         if (userId == null) {
@@ -104,7 +104,7 @@ public class KeycloakServiceImpl implements KeycloakService {
     }
 
     @Override
-    public List<KeycloakDTO> getAllKeycloakUsers() {
+    public List<UserDTO> getAllKeycloakUsers() {
         List<UserRepresentation> users = keycloakClient.getAllUsers();
 
         return users.stream()

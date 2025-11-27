@@ -10,12 +10,14 @@ import org.springframework.stereotype.Component;
 import org.springframework.util.LinkedMultiValueMap;
 import org.springframework.util.MultiValueMap;
 import org.springframework.web.client.HttpClientErrorException;
+import org.springframework.web.client.HttpServerErrorException;
 import org.springframework.web.client.RestClient;
 import org.springframework.web.client.RestClientException;
-import se.frisk.cadettsplittersgateway_edufy.dtos.KeycloakDTO;
+import se.frisk.cadettsplittersgateway_edufy.dtos.UserDTO;
 import se.frisk.cadettsplittersgateway_edufy.dtos.RoleDTO;
 import se.frisk.cadettsplittersgateway_edufy.dtos.UserRepresentation;
 import se.frisk.cadettsplittersgateway_edufy.enums.KeycloakRoles;
+import se.frisk.cadettsplittersgateway_edufy.exceptions.UserAlreadyExistsException;
 import se.frisk.cadettsplittersgateway_edufy.exceptions.UserNotFoundException;
 import java.net.URI;
 import java.time.Instant;
@@ -387,8 +389,9 @@ public class KeycloakClient {
         }
     }
 
-    public String createKeycloakUser(KeycloakDTO userDto){
-       ensureClientToken();
+    public String createKeycloakUser(UserDTO userDto) {
+        ensureClientToken();
+
 
         List<Map<String, Object>> existingUsers = restClient.get()
                 .uri("/admin/realms/{realm}/users?username={username}", Map.of(
@@ -399,14 +402,13 @@ public class KeycloakClient {
                 .retrieve()
                 .body(List.class);
 
-        if (!existingUsers.isEmpty()) {
-            String existingId = (String) existingUsers.getFirst().get("id");
+        if (existingUsers != null && !existingUsers.isEmpty()) {
+            Map<String, Object> firstUser = existingUsers.getFirst();
+            String existingId = (String) firstUser.get("id");
             System.out.println("User '" + userDto.getUsername() + "' already exists with ID: " + existingId);
             userDto.setKeycloakId(existingId);
             return existingId;
         }
-
-        String url = "/admin/realms/{realm}/users";
 
         Map<String, Object> userBody = new HashMap<>();
         userBody.put("username", userDto.getUsername());
@@ -422,26 +424,43 @@ public class KeycloakClient {
         credentials.put("temporary", false);
         userBody.put("credentials", List.of(credentials));
 
-        ResponseEntity<Void> response = restClient.post()
-                .uri(url, Map.of("realm", realmName))
-                .header(HttpHeaders.AUTHORIZATION, "Bearer " + clientToken)
-                .header(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE)
-                .body(userBody)
-                .retrieve()
-                .toBodilessEntity();
+        try {
+            ResponseEntity<Void> response = restClient.post()
+                    .uri("/admin/realms/{realm}/users", Map.of("realm", realmName))
+                    .header(HttpHeaders.AUTHORIZATION, "Bearer " + clientToken)
+                    .header(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE)
+                    .body(userBody)
+                    .retrieve()
+                    .toBodilessEntity();
 
-        if (response.getStatusCode().is2xxSuccessful()) {
-            URI locationUri = response.getHeaders().getLocation();
-            if (locationUri == null) {
-                throw new RuntimeException("User created but Location header is missing");
+            System.out.println("Keycloak create user response status: " + response.getStatusCode());
+
+            if (response.getStatusCode().is2xxSuccessful()) {
+                URI locationUri = response.getHeaders().getLocation();
+                if (locationUri == null) {
+                    throw new RuntimeException("User created but Location header is missing");
+                }
+                String[] parts = locationUri.toString().split("/");
+                String userId = parts[parts.length - 1];
+
+                userDto.setKeycloakId(userId);
+                return userId;
+            } else {
+                throw new RuntimeException("Failed to create user: " + response.getStatusCode());
             }
-            String[] parts = locationUri.toString().split("/");
-            String userId = parts[parts.length - 1];
 
-            userDto.setKeycloakId(userId);
-            return userId;
-        } else {
-            throw new RuntimeException("Failed to create user: " + response.getStatusCode());
+        } catch (HttpClientErrorException | HttpServerErrorException ex) {
+            System.err.println("Keycloak create user FAILED");
+            System.err.println("Status: " + ex.getStatusCode());
+            System.err.println("Body:   " + ex.getResponseBodyAsString());
+
+
+            if (ex.getStatusCode() == HttpStatus.CONFLICT) {
+
+                throw new UserAlreadyExistsException("user", "keycloak", userDto.getUsername());
+            }
+
+            throw ex;
         }
     }
 
@@ -523,7 +542,7 @@ public class KeycloakClient {
     }
 
 
-    public void assignRoleToUser(KeycloakDTO userDTO) {
+    public void assignRoleToUser(UserDTO userDTO) {
         ensureClientToken();
 
         String roleName = userDTO.getRole().toString();
@@ -594,7 +613,7 @@ public class KeycloakClient {
 
         createRoles(clientUuid);
 
-        KeycloakDTO lynsey = new KeycloakDTO();
+        UserDTO lynsey = new UserDTO();
         lynsey.setUsername("lynsey");
         lynsey.setFirstName("Lynsey");
         lynsey.setLastName("Fox");
@@ -602,7 +621,7 @@ public class KeycloakClient {
         lynsey.setPassword("LF123!");
         lynsey.setRole(KeycloakRoles.edufy_USER);
 
-        KeycloakDTO benjamin = new KeycloakDTO();
+        UserDTO benjamin = new UserDTO();
         benjamin.setUsername("benjamin");
         benjamin.setFirstName("Benjamin");
         benjamin.setLastName("Portsmouth");
@@ -610,7 +629,7 @@ public class KeycloakClient {
         benjamin.setPassword("BP123!");
         benjamin.setRole(KeycloakRoles.edufy_USER);
 
-        KeycloakDTO christoffer = new KeycloakDTO();
+        UserDTO christoffer = new UserDTO();
         christoffer.setUsername("christoffer");
         christoffer.setFirstName("Christoffer");
         christoffer.setLastName("Frisk");
@@ -618,7 +637,7 @@ public class KeycloakClient {
         christoffer.setPassword("CF123!");
         christoffer.setRole(KeycloakRoles.edufy_USER);
 
-        KeycloakDTO niklas = new KeycloakDTO();
+        UserDTO niklas = new UserDTO();
         niklas.setUsername("niklas");
         niklas.setFirstName("Niklas");
         niklas.setLastName("Einarsson");
@@ -626,7 +645,7 @@ public class KeycloakClient {
         niklas.setPassword("NE123!");
         niklas.setRole(KeycloakRoles.edufy_USER);
 
-        KeycloakDTO admin = new KeycloakDTO();
+        UserDTO admin = new UserDTO();
         admin.setUsername("admin");
         admin.setFirstName("Admin");
         admin.setLastName("Istrator");

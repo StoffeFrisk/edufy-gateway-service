@@ -109,3 +109,7 @@ spring:
           default-filters:
             - TokenRelay
 
+logging:
+  level:
+    org.springframework.security: DEBUG
+    org.springframework.web: DEBUG

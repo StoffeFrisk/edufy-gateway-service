@@ -2,7 +2,7 @@ package se.frisk.cadettsplittersgateway_edufy.dtos;
 
 import se.frisk.cadettsplittersgateway_edufy.enums.KeycloakRoles;
 
-public class KeycloakDTO {
+public class UserDTO {
     private String keycloakId;
     private String username;
     private String firstName;
@@ -11,9 +11,9 @@ public class KeycloakDTO {
     private String password;
     private KeycloakRoles role;
 
-    public KeycloakDTO() {}
+    public UserDTO() {}
 
-    public KeycloakDTO(String keycloakId, String username, String firstName, String lastName, String email, String password, KeycloakRoles role) {
+    public UserDTO(String keycloakId, String username, String firstName, String lastName, String email, String password, KeycloakRoles role) {
         this.keycloakId = keycloakId;
         this.username = username;
         this.firstName = firstName;
@@ -81,7 +81,7 @@ public class KeycloakDTO {
 
     @Override
     public String toString() {
-        return "KeycloakDTO{" +
+        return "UserDTO{" +
                 "keycloakId='" + keycloakId + '\'' +
                 ", username='" + username + '\'' +
                 ", firstName='" + firstName + '\'' +
