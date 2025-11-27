@@ -1,6 +1,7 @@
 networks:
   cadett-splitters-net:
     name: cadett-splitters-net
+    external: true
 
 volumes:
   db-music:
@@ -20,15 +21,24 @@ services:
       dockerfile: Dockerfile
     container_name: edufy-gateway-service
     depends_on:
+      - keycloak
+      - edufy-user-service
       - edufy-music-service
       - edufy-pod-service
       - edufy-video-service
       - edufy-ratings-service
-      - edufy-user-service
       - edufy-album-service
       - edufy-artist-service
       - edufy-recommendations-service
       - edufy-history-service
+    command: sh -c "sleep 120 && java -jar app.jar"
+    environment:
+      - KEYCLOAK_AUTH_SERVER_URL=http://keycloak:8080
+      - KEYCLOAK_REALM=edufy-realm
+      - KEYCLOAK_CLIENT_ID=edufy-gateway-service
+      - KC_BOOTSTRAP_ADMIN_USERNAME=BSadmin
+      - KC_BOOTSTRAP_ADMIN_PASSWORD=BSadmin
+      - SERVER_PORT=4505
     ports:
       - "4505:4505"
     networks:
@@ -67,7 +77,10 @@ services:
       SPRING_DATASOURCE_USERNAME: cadett-splitters
       SPRING_DATASOURCE_PASSWORD: cspwd
       SERVER_PORT: 4595
+      SPRING_PROFILES_ACTIVE: prod
       SERVICES_USER_BASE_URL: http://edufy-user-service:4515/users
+    ports:
+      - "4595:4595"
     networks:
       - cadett-splitters-net
     restart: unless-stopped
@@ -104,6 +117,9 @@ services:
       SPRING_DATASOURCE_USERNAME: cadett-splitters
       SPRING_DATASOURCE_PASSWORD: cspwd
       SERVER_PORT: 4525
+      SPRING_PROFILES_ACTIVE: prod
+    ports:
+      - "4525:4525"
     networks:
       - cadett-splitters-net
     restart: unless-stopped
@@ -140,6 +156,9 @@ services:
       SPRING_DATASOURCE_USERNAME: cadett-splitters
       SPRING_DATASOURCE_PASSWORD: cspwd
       SERVER_PORT: 4535
+      SPRING_PROFILES_ACTIVE: prod
+    ports:
+      - "4535:4535"
     networks:
       - cadett-splitters-net
     restart: unless-stopped
@@ -176,13 +195,16 @@ services:
       SPRING_DATASOURCE_USERNAME: cadett-splitters
       SPRING_DATASOURCE_PASSWORD: cspwd
       SERVER_PORT: 4545
+      SPRING_PROFILES_ACTIVE: prod
       SERVICES_ARTIST_BASE_URL: http://edufy-artist-service:4555
       SERVICES_ALBUM_BASE_URL:  http://edufy-album-service:4565
+    ports:
+      - "4545:4545"
     networks:
       - cadett-splitters-net
     restart: unless-stopped
 
-  # ==================== RATINGS ====================
+  # =============== RATINGS ===========================
   db-ratings:
     image: mysql:8
     container_name: db-ratings
@@ -205,6 +227,7 @@ services:
   edufy-ratings-service:
     build:
       context: ../edufy-ratings-service
+      dockerfile: Dockerfile
     container_name: edufy-ratings-service
     depends_on:
       db-ratings:
@@ -214,6 +237,9 @@ services:
       SPRING_DATASOURCE_USERNAME: cadett-splitters
       SPRING_DATASOURCE_PASSWORD: cspwd
       SERVER_PORT: 4585
+      SPRING_PROFILES_ACTIVE: prod
+    ports:
+      - "4585:4585"
     networks:
       - cadett-splitters-net
     restart: unless-stopped
@@ -223,7 +249,7 @@ services:
     image: mysql:8
     container_name: db-user
     environment:
-      MYSQL_DATABASE: user
+      MYSQL_DATABASE: users
       MYSQL_USER: cadett-splitters
       MYSQL_PASSWORD: cspwd
       MYSQL_ROOT_PASSWORD: rootpwd
@@ -241,15 +267,19 @@ services:
   edufy-user-service:
     build:
       context: ../edufy-user-service
+      dockerfile: Dockerfile
     container_name: edufy-user-service
     depends_on:
       db-user:
         condition: service_healthy
     environment:
-      SPRING_DATASOURCE_URL: jdbc:mysql://db-user:3306/user?useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC
+      SPRING_DATASOURCE_URL: jdbc:mysql://db-user:3306/users?useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC
       SPRING_DATASOURCE_USERNAME: cadett-splitters
       SPRING_DATASOURCE_PASSWORD: cspwd
       SERVER_PORT: 4515
+      SPRING_PROFILES_ACTIVE: prod
+    ports:
+      - "4515:4515"
     networks:
       - cadett-splitters-net
     restart: unless-stopped
@@ -286,6 +316,9 @@ services:
       SPRING_DATASOURCE_USERNAME: cadett-splitters
       SPRING_DATASOURCE_PASSWORD: cspwd
       SERVER_PORT: 4565
+      SPRING_PROFILES_ACTIVE: prod
+    ports:
+      - "4565:4565"
     networks:
       - cadett-splitters-net
     restart: unless-stopped
@@ -323,6 +356,8 @@ services:
       SPRING_DATASOURCE_PASSWORD: cspwd
       SERVER_PORT: 4555
       SPRING_PROFILES_ACTIVE: prod
+    ports:
+      - "4555:4555"
     networks:
       - cadett-splitters-net
     restart: unless-stopped
@@ -340,12 +375,35 @@ services:
       - edufy-video-service
     environment:
       SERVER_PORT: 4575
+      SPRING_PROFILES_ACTIVE: prod
       SERVICES_HISTORY_BASE_URL: http://edufy-history-service:4595
       SERVICES_RATINGS_BASE_URL: http://edufy-ratings-service:4585
       SERVICES_MUSIC_BASE_URL:   http://edufy-music-service:4525
       SERVICES_POD_BASE_URL:     http://edufy-pod-service:4535
       SERVICES_VIDEO_BASE_URL:   http://edufy-video-service:4545
       SERVICES_USER_BASE_URL:    http://edufy-user-service:4515/users
+    ports:
+      - "4575:4575"
+    networks:
+      - cadett-splitters-net
+    restart: unless-stopped
+
+  # ================= KEYCLOAK ===============
+  keycloak:
+    image: quay.io/keycloak/keycloak:26.0.0
+    container_name: keycloak
+    environment:
+      KC_HOSTNAME: keycloak
+      KC_HOSTNAME_PORT: 8080
+      KC_HOSTNAME_STRICT: false
+      KC_HOSTNAME_STRICT_HTTPS: false
+      KC_PROXY: edge
+      KC_BOOTSTRAP_ADMIN_USERNAME: BSadmin
+      KC_BOOTSTRAP_ADMIN_PASSWORD: BSadmin
+      KC_HTTP_ENABLED: "true"
+    ports:
+      - "8080:8080"
+    command: start-dev
     networks:
       - cadett-splitters-net
     restart: unless-stopped

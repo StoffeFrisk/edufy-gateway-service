@@ -1,21 +1,44 @@
 
 package se.frisk.cadettsplittersgateway_edufy.config;
 
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
-import org.springframework.security.config.Customizer;
-import org.springframework.security.config.annotation.web.builders.HttpSecurity;
-import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
-import org.springframework.security.web.SecurityFilterChain;
+import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity;
+import org.springframework.security.config.annotation.web.reactive.EnableWebFluxSecurity;
+import org.springframework.security.config.web.server.ServerHttpSecurity;
+import org.springframework.security.web.server.SecurityWebFilterChain;
+import se.frisk.cadettsplittersgateway_edufy.converters.ReactiveJwtAuthConverter;
 
 @Configuration
-@EnableWebSecurity
+@EnableWebFluxSecurity
+@EnableMethodSecurity
 public class SecurityConfig {
+
+    private final ReactiveJwtAuthConverter jwtAuthConverter;                    //Lynsey Fox
+
+    @Autowired
+    public SecurityConfig(final ReactiveJwtAuthConverter jwtAuthConverter) {
+        this.jwtAuthConverter = jwtAuthConverter;                       //Lynsey Fox
+    }
+
+
     @Bean
-    SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
+    public SecurityWebFilterChain securityWebFilterChain(ServerHttpSecurity http) {
         http
                 .csrf(csrf -> csrf.disable())
-                .authorizeHttpRequests(a -> a.anyRequest().permitAll());
+                .formLogin(form -> form.disable())
+                .httpBasic(basic -> basic.disable())
+                .authorizeExchange(exchanges ->
+                        exchanges
+                                .pathMatchers("/actuator/**", "/health", "/info").permitAll()
+                                .pathMatchers("/keycloak/**").permitAll()
+                                .anyExchange().authenticated()
+                )
+                .oauth2ResourceServer(oauth2 ->
+                        oauth2.jwt(jwt ->
+                                jwt.jwtAuthenticationConverter(jwtAuthConverter)
+                        ));
         return http.build();
     }
 }
