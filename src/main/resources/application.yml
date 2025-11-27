@@ -51,7 +51,7 @@ spring:
             - id: edufy-pod-service
               uri: http://edufy-pod-service:4535
               predicates:
-                - Path=/api/pod/**
+                - Path=/api/pods/**
               filters:
                 - StripPrefix=1
 
